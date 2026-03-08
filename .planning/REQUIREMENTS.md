@@ -13,9 +13,9 @@
 
 ### Setup
 
-- [ ] **SET-01**: User can complete first-run setup through a guided step-by-step flow with only the most important fields visible at each step.
+- [x] **SET-01**: User can complete first-run setup through a guided step-by-step flow with only the most important fields visible at each step.
 - [ ] **SET-02**: User sees different setup fields depending on whether Victron transport is set to Modbus or MQTT.
-- [ ] **SET-03**: User receives clear validation feedback before advancing to the next setup step or saving the setup.
+- [x] **SET-03**: User receives clear validation feedback before advancing to the next setup step or saving the setup.
 - [ ] **SET-04**: User can review the key setup values before final save.
 
 ### Progressive Disclosure
@@ -68,9 +68,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | NAV-01 | Phase 1 | Complete |
 | NAV-02 | Phase 1 | Complete |
 | NAV-03 | Phase 1 | Complete |
-| SET-01 | Phase 2 | Pending |
+| SET-01 | Phase 2 | Complete |
 | SET-02 | Phase 2 | Pending |
-| SET-03 | Phase 2 | Pending |
+| SET-03 | Phase 2 | Complete |
 | SET-04 | Phase 2 | Pending |
 | DISC-01 | Phase 3 | Pending |
 | DISC-02 | Phase 3 | Pending |

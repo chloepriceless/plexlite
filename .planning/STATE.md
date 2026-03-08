@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: Ready to start
-stopped_at: Completed 01-03-PLAN.md
-last_updated: "2026-03-08T21:50:54.764Z"
-last_activity: "2026-03-08 - Completed Phase 1 Plan 03: compact settings shell behavior"
+status: In Progress
+stopped_at: Completed 02-01-PLAN.md
+last_updated: "2026-03-08T23:13:26.304Z"
+last_activity: "2026-03-08 - Completed Phase 2 Plan 01: guided setup backbone"
 progress:
   total_phases: 5
   completed_phases: 1
-  total_plans: 3
-  completed_plans: 3
-  percent: 20
+  total_plans: 6
+  completed_plans: 4
+  percent: 67
 ---
 
 # Project State
@@ -26,28 +26,29 @@ See: .planning/PROJECT.md (updated 2026-03-08)
 ## Current Position
 
 Phase: 2 of 5 (Guided Setup Rebuild)
-Plan: 0 of 3 in current phase
-Status: Ready to start
-Last activity: 2026-03-08 - Completed Phase 1 Plan 03: compact settings shell behavior
+Plan: 1 of 3 in current phase
+Status: In Progress
+Last activity: 2026-03-08 - Completed Phase 2 Plan 01: guided setup backbone
 
-Progress: [██░░░░░░░░] 20%
+Progress: [███████░░░] 67%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 3
-- Average duration: 5 min
-- Total execution time: 0.3 hours
+- Total plans completed: 4
+- Average duration: 6 min
+- Total execution time: 0.4 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01-settings-shell-foundation | 3 | 15 min | 5 min |
+| 02-guided-setup-rebuild | 1 | 8 min | 8 min |
 
 **Recent Trend:**
-- Last 5 plans: 4 min, 6 min, 5 min
-- Trend: Stable
+- Last 5 plans: 4 min, 6 min, 5 min, 8 min
+- Trend: Slightly rising
 
 *Updated after each plan completion*
 
@@ -55,6 +56,7 @@ Progress: [██░░░░░░░░] 20%
 |-------------|----------|-------|--------|
 | Phase 01-settings-shell-foundation P02 | 6 min | 3 tasks | 3 files |
 | Phase 01-settings-shell-foundation P03 | 5 min | 3 tasks | 4 files |
+| Phase 02-guided-setup-rebuild P01 | 8min | 3 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -72,6 +74,9 @@ Recent decisions affecting current work:
 - [Phase 01-settings-shell-foundation]: Render each top-level destination as one workspace with technical subsection headers so no existing section becomes orphaned.
 - [Phase 01-settings-shell-foundation]: Keep the desktop shell compact by tightening settings-specific spacing and making the primary action panel sticky, while disabling that stickiness on narrow widths.
 - [Phase 01-settings-shell-foundation]: Build active workspaces through a pure helper that marks only the first group open by default so each destination stays calmer than the old all-open page.
+- [Phase 02-guided-setup-rebuild]: Expose setup helpers on globalThis so node:test can validate wizard state without a browser document.
+- [Phase 02-guided-setup-rebuild]: Keep setup source of truth in draftConfig plus effectiveConfig so step changes do not depend on hidden DOM fields.
+- [Phase 02-guided-setup-rebuild]: Render the setup page through shell hooks with one active workspace and dedicated validation summary instead of four always-open cards.
 
 ### Pending Todos
 
@@ -83,6 +88,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-08T21:44:58.422Z
-Stopped at: Completed 01-03-PLAN.md
+Last session: 2026-03-08T23:13:26.296Z
+Stopped at: Completed 02-01-PLAN.md
 Resume file: None
