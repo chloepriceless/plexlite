@@ -149,3 +149,61 @@ Run: `npm test`
 **Step 3: Review output**
 
 - Sicherstellen, dass Rohdaten, Slot-Materialisierung, VRM-Priorisierung und History-UI konsistent bleiben.
+
+---
+
+## Addendum: VRM-Normierung und separater Backfill
+
+### Task 7: Off-Quarter-VRM-Slots korrekt normieren
+
+**Files:**
+- Modify: `/Volumes/My Shared Files/CODEX/DVhub/dvhub/test/history-import.test.js`
+- Modify: `/Volumes/My Shared Files/CODEX/DVhub/dvhub/history-import.js`
+
+**Step 1: Write the failing test**
+
+- Erwartung: Mehrere VRM-Zeitstempel innerhalb derselben Viertelstunde erzeugen genau einen finalen 15-Minuten-Slot je Serie.
+- Erwartung: Materialisierte `vrm_import`-Slots werden nicht durch mehrfach als `900s` behandelte Samples aufgeblasen.
+
+**Step 2: Run test to verify it fails**
+
+Run: `node --test test/history-import.test.js`
+
+**Step 3: Write minimal implementation**
+
+- VRM-Zeitstempel vor kanonischer Rekonstruktion auf finale 15-Minuten-Slots normieren.
+- Pro finalem Slot nur eine kanonische Rekonstruktion schreiben.
+
+**Step 4: Run test to verify it passes**
+
+Run: `node --test test/history-import.test.js`
+
+### Task 8: Separaten VRM-Backfill-Job mit Chunking und Backoff einfuehren
+
+**Files:**
+- Modify: `/Volumes/My Shared Files/CODEX/DVhub/dvhub/test/history-import.test.js`
+- Modify: `/Volumes/My Shared Files/CODEX/DVhub/dvhub/test/settings-history-import.test.js`
+- Modify: `/Volumes/My Shared Files/CODEX/DVhub/dvhub/history-import.js`
+- Modify: `/Volumes/My Shared Files/CODEX/DVhub/dvhub/server.js`
+- Modify: `/Volumes/My Shared Files/CODEX/DVhub/dvhub/public/settings.js`
+- Modify: `/Volumes/My Shared Files/CODEX/DVhub/dvhub/public/tools.js`
+
+**Step 1: Write the failing test**
+
+- Erwartung: separater VRM-Backfill-Job ist ohne Datumsangaben startbar.
+- Erwartung: der Job arbeitet in Chunks, wartet zwischen Chunks und stoppt bei dauerhaft leeren VRM-Fenstern.
+- Erwartung: UI/Request-Bau kann manuellen Bereichsimport und autonomen Backfill unterscheiden.
+
+**Step 2: Run test to verify it fails**
+
+Run: `node --test test/history-import.test.js test/settings-history-import.test.js`
+
+**Step 3: Write minimal implementation**
+
+- Neuen Manager-Pfad fuer autonomen VRM-Backfill einfuehren.
+- API-Endpoint fuer expliziten Start bereitstellen.
+- Settings/Tools-UI fuer separaten Start ohne Datumsfelder erweitern.
+
+**Step 4: Run test to verify it passes**
+
+Run: `node --test test/history-import.test.js test/settings-history-import.test.js`

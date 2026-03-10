@@ -146,3 +146,30 @@ Vorteile:
 - Tests fuer History-Lesen aus der neuen Slot-Tabelle.
 - Tests fuer Rueckfall auf lokale Slots, wenn VRM fehlt.
 - Tests fuer Migrations-/Backfill-Helfer aus vorhandenen Rohsamples.
+
+## Addendum: VRM Slot-Normierung und autonomer Backfill
+
+**Validiert am 2026-03-10**
+
+- VRM-Import darf sich fachlich nicht darauf verlassen, dass `interval = 15mins` genau einen sauberen Wert pro finalem 15-Minuten-Slot liefert.
+- Beobachtete VRM-Zeitstempel wie `00/03/09`, `15/18/24`, `30/33/39` und `45/48/54` muessen vor der kanonischen Rekonstruktion auf echte 15-Minuten-Slots normiert werden.
+- Pro finalem 15-Minuten-Slot und Serie darf nach der Rekonstruktion nur ein kanonischer `vrm_import`-Wert entstehen.
+
+### Separater VRM-Backfill-Job
+
+- Neben dem bestehenden Bereichsimport gibt es einen separaten, explizit startbaren VRM-Backfill-Job.
+- Der Backfill benoetigt keine manuellen Start-/Endwerte.
+- Er arbeitet chunkweise ueber feste Zeitfenster und stoppt, sobald fuer mehrere aufeinanderfolgende Fenster keine VRM-Daten mehr verfuegbar sind.
+- Der Job bleibt spaeter erneut manuell startbar, falls Luecken vermutet werden.
+
+### Automatischer Betrieb
+
+- Wenn `telemetry.historyImport.enabled` aktiv ist und die VRM-Zugangsdaten gueltig sind, darf der Backfill auch automatisch im Hintergrund gestartet werden.
+- Der automatische Lauf muss denselben Jobpfad nutzen wie der manuelle Start, damit Logging, Retry und Fortschritt konsistent bleiben.
+
+### API-Limits und Schonung
+
+- VRM-Abfragen werden in kleine Fenster aufgeteilt, bevorzugt tage- oder wochenweise.
+- Zwischen den Chunks wird bewusst gewartet.
+- Bei `429` oder vergleichbaren Rate-Limit-/Transient-Fehlern wird mit Backoff erneut versucht.
+- Fortschritt und Ergebnis jedes Laufs werden als eigener Import-Job protokolliert.
