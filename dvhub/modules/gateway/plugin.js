@@ -92,7 +92,17 @@ async function registerGatewayPlugin(fastify, opts) {
     config
   });
 
-  registerWebSocketRoutes(fastify, { config });
+  const { broadcast } = registerWebSocketRoutes(fastify, { config });
+
+  // Wire broadcast to aggregate telemetry stream -- pushes live data to all WS clients
+  const telemetryStream = eventBus?.getStream('telemetry');
+  if (telemetryStream) {
+    telemetryStream.subscribe(data => {
+      if (data) {
+        broadcast({ type: 'telemetry', data });
+      }
+    });
+  }
 
   fastify.get('/*', async (request, reply) => {
     const pathname = String(request.params['*'] || '').replace(/^\/+/, '');

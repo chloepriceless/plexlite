@@ -146,3 +146,31 @@ describe('INT-06: planEngine exposed on optimizer module object', () => {
     assert.match(src, /this\.planEngine\s*=\s*null/);
   });
 });
+
+// ─── Task 4: INT-03 — WebSocket broadcast wired to telemetry ───
+
+describe('INT-03: WebSocket broadcast wired to telemetry stream', () => {
+  const src = readSource('modules/gateway/plugin.js');
+
+  it('captures broadcast return from registerWebSocketRoutes', () => {
+    assert.match(src, /const\s*\{\s*broadcast\s*\}\s*=\s*registerWebSocketRoutes/);
+  });
+
+  it('subscribes to telemetry stream', () => {
+    assert.match(src, /getStream\('telemetry'\)/);
+  });
+
+  it('calls broadcast with telemetry data', () => {
+    assert.match(src, /broadcast\(\{\s*type:\s*'telemetry'/);
+  });
+
+  it('does NOT have bare registerWebSocketRoutes call (return value captured)', () => {
+    // The old pattern was just: registerWebSocketRoutes(fastify, { config });
+    // Now it should be: const { broadcast } = registerWebSocketRoutes(...)
+    const lines = src.split('\n');
+    const bareCall = lines.some(line =>
+      /^\s*registerWebSocketRoutes\(/.test(line) && !line.includes('const')
+    );
+    assert.strictEqual(bareCall, false, 'bare registerWebSocketRoutes call should not exist');
+  });
+});
