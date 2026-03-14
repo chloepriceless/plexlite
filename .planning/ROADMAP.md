@@ -55,11 +55,13 @@ Plans:
   5. Retention policy enforces cleanup: raw data older than 7 days is purged after rollup confirmation, 5-min data retained 90 days, 15-min data retained 2 years
   6. All tables follow schema-prefix convention (shared_, dv_, opt_, exec_, telemetry_) and queries against 30-day history return in under 500ms
   7. Backend selection via config: `database.backend: "timescaledb" | "sqlite"` (default: timescaledb)
-**Plans**: TBD
+**Plans**: 4 plans
 
 Plans:
-- [ ] 02-01: TBD
-- [ ] 02-02: TBD
+- [ ] 02-01-PLAN.md -- Adapter interface, factory function, SQL migrations, and Wave 0 test scaffolds
+- [ ] 02-02-PLAN.md -- SQLite backend: WAL mode, monthly partitioning, multi-resolution query routing
+- [ ] 02-03-PLAN.md -- TimescaleDB backend: pg Pool, hypertables, continuous aggregates, migration runner
+- [ ] 02-04-PLAN.md -- SQLite rollup engine, retention policies, config wiring, and integration tests
 
 ### Phase 3: DV Module
 **Goal**: All Direktvermarktung functionality operates as an independent module that can be enabled/disabled without affecting Gateway or Optimizer, while maintaining real-time measurement compliance
@@ -167,7 +169,7 @@ Phases execute in numeric order. Phases 3 and 4 share Phase 2 as dependency and 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation | 3/4 | In Progress|  |
-| 2. Data Architecture | 0/2 | Not started | - |
+| 2. Data Architecture | 0/4 | Not started | - |
 | 3. DV Module | 0/2 | Not started | - |
 | 4. Optimizer Core | 0/3 | Not started | - |
 | 5. External Integrations | 0/3 | Not started | - |
