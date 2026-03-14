@@ -68,9 +68,11 @@ Das System muss zuverlaessig und in Echtzeit die Direktvermarktungs-Schnittstell
 - [ ] Plan-Scoring, Vergleich, automatische Winner-Auswahl zwischen Optimierern
 
 **Datenarchitektur:**
-- [ ] Optimale Datenbankstruktur recherchieren (PostgreSQL vs. TimeSeries-DB vs. Hybrid)
-- [ ] Multi-Resolution-Datenhaltung (hochaufgeloest fuer Charts, 15min fuer Steuerung)
-- [ ] Schema-Trennung nach Modulen (shared, dv, opt, exec — oder aequivalent)
+- [ ] SQLite beibehalten mit WAL-Optimierung (Research-Ergebnis: PostgreSQL nur als optionaler Upgrade-Pfad)
+- [ ] Multi-Resolution-Datenhaltung: Raw ~1s (7d), 5min (90d), 15min (2y), Daily (forever)
+- [ ] Schema-Trennung per Table-Prefix: shared_, dv_, opt_, exec_, telemetry_
+- [ ] Monthly partitioned raw-telemetry tables (telemetry_raw_YYYY_MM)
+- [ ] Rollup-Engine fuer automatische Aggregation
 - [ ] Sichere, leistungsfaehige, schnelle Datenstruktur
 
 **Deployment:**
@@ -82,9 +84,26 @@ Das System muss zuverlaessig und in Echtzeit die Direktvermarktungs-Schnittstell
 - [ ] Minimaler Maintenance-Aufwand ueber alle Deployment-Varianten
 
 **UI/Frontend:**
-- [ ] UI-Framework-Wahl recherchieren (Vanilla vs. leichtes Framework)
+- [ ] Preact + HTM als UI-Framework (Research-Ergebnis: 5KB, kein Build-Step, inkrementelle Migration)
 - [ ] Einstellungs-Oberflaeche fuer alle Stellschrauben
 - [ ] Modul-Aktivierung im Setup-Menue
+- [ ] Animiertes Power-Flow-Diagramm (PV → Batterie → Haus → Netz)
+- [ ] EPEX 15-Minuten-Aufloesung (Markt seit 2025-10-01 auf 96 Preise/Tag umgestellt)
+- [ ] Mobile-Responsive Layout
+- [ ] Preis-Overlay auf Energy-Timeline
+- [ ] Autarkiegrad und Eigenverbrauchsquote als Kennzahlen
+- [ ] Forecast-Anzeige (PV + Last aus EOS/EMHASS)
+
+**Sicherheit:**
+- [ ] Modbus-TCP-Proxy: IP-AllowList, Interface-Binding, Buffer-Size-Caps
+- [ ] Adapter-Pattern fuer externe APIs mit Schema-Validierung (EOS/EMHASS API-Drift)
+- [ ] Container-Version-Pinning (nie :latest Tag)
+
+**Arbitrierung + Execution:**
+- [ ] Intent-basierte Steuerung: Safety > DV > Manual > Optimizer > Fallback
+- [ ] Execution-Layer: Hardware-Writes nur ueber Device HAL
+- [ ] Command-Logging mit Readback-Verification
+- [ ] Deviation-Alerting und Audit-Trail
 
 ### Out of Scope
 
@@ -134,13 +153,77 @@ Diese Dokumente dienen als Referenz, sind aber nicht bindend — insbesondere di
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| 3 Module: Gateway + DV + Optimierung | Universalitaet und unabhaengiger Betrieb, mindestens ein Modul neben Gateway aktiv | — Pending |
-| Hersteller-Configs externalisiert | Keine hart-verdrahteten Register im Code, User kann eigene Configs anlegen | — Pending |
-| DB-Wahl offen, Research erforderlich | TimeSeries-Daten koennten spezielle DB brauchen, nicht vorab auf PostgreSQL festlegen | — Pending |
-| UI-Framework offen, Research erforderlich | Vanilla JS hat Grenzen bei wachsendem Dashboard, aber Framework-Overhead auf Pi beachten | — Pending |
-| Deployment flexibel: nativ + Container | Container-Stack mit EOS/EMHASS/EVCC sinnvoll, aber nativer Betrieb auf Pi muss bleiben | — Pending |
-| Modul-Trennung als erste Prioritaet | Architektur-Fundament muss stehen bevor Features drauf gebaut werden | — Pending |
-| Victron + Deye + generisch fuer v1 | Victron als Hauptplattform, Deye als zweiter Hersteller, generisch fuer alles andere | — Pending |
+| 3 Module: Gateway + DV + Optimierung | Universalitaet und unabhaengiger Betrieb, mindestens ein Modul neben Gateway aktiv | ✓ Confirmed — In-Process Modular Monolith (kein Microservice) |
+| Hersteller-Configs externalisiert | Keine hart-verdrahteten Register im Code, User kann eigene Configs anlegen | ✓ Confirmed — Device HAL mit Driver-Interface |
+| DB: SQLite beibehalten, PostgreSQL optional | ~86K rows/day locker in SQLite, kein TSDB-Overhead auf Pi, PG als Upgrade-Pfad | ✓ Decided — SQLite + WAL + Partitioning |
+| UI: Preact + HTM (kein Build-Step) | 5KB total, React-API, tagged templates statt JSX, inkrementelle Migration | ✓ Decided — Preact 10.x + HTM 3.x |
+| Deployment: Hybrid als Default | DVhub nativ via systemd, EOS/EMHASS/EVCC als Docker Container mit CPU/Mem Limits | ✓ Decided — Hybrid Default, Full-Docker optional |
+| Modul-Trennung als erste Prioritaet | Architektur-Fundament muss stehen bevor Features drauf gebaut werden | ✓ Confirmed |
+| Victron + Deye + generisch fuer v1 | Victron als Hauptplattform, Deye als zweiter Hersteller, generisch fuer alles andere | ✓ Confirmed — Fronius als bester erster Non-Victron Kandidat |
+| EventEmitter als interner Bus | Native Node.js, zero Dependencies, genuegt fuer Single-Process Decoupling | ✓ Decided |
+| DV-Echtzeit-Pfad: synchron in-process | DV-Messwert darf NICHT async werden — Vertragliche Pflicht, Latenz-Budget 2x pollInterval | ✓ Architectural Rule |
+| Keine neuen Server-Dependencies | EventEmitter, fetch, node:sqlite, node:http — alles Node.js built-ins | ✓ Decided |
+
+## Traceability
+
+| Requirement | Description | Phase | Status |
+|-------------|-------------|-------|--------|
+| ARCH-01 | Three modules: Gateway, DV, Optimizer | Phase 1 | Pending |
+| ARCH-02 | Gateway always present, at least one other active | Phase 1 | Pending |
+| ARCH-03 | Module activation/deactivation in setup menu | Phase 8 | Pending |
+| ARCH-04 | Clear module boundaries with defined internal APIs | Phase 1 | Pending |
+| ARCH-05 | Shared endpoints where universal, own where needed | Phase 1 | Pending |
+| GW-01 | Universal device connectivity (ModbusTCP, MQTT, HTTP, Webhooks) | Phase 1 | Pending |
+| GW-02 | Externalized manufacturer configs | Phase 1 | Pending |
+| GW-03 | Support Victron, Deye, generic Modbus/MQTT | Phase 1 | Pending |
+| GW-04 | Multi-resolution telemetry collection | Phase 2 | Pending |
+| GW-05 | Messpunkt management (capture, process, store, retrieve) | Phase 1 | Pending |
+| GW-06 | Control signal forwarding to connected devices | Phase 1 | Pending |
+| GW-07 | IP AllowList and optional token auth per interface | Phase 1 | Pending |
+| DV-01 | Multiple DV provider support (LUOX, extensible) | Phase 3 | Pending |
+| DV-02 | Measurement delivery to DV provider (Read signal) | Phase 3 | Pending |
+| DV-03 | Curtailment signal processing (0%/100%, intermediate) | Phase 3 | Pending |
+| DV-04 | Control commands to connected systems | Phase 3 | Pending |
+| DV-05 | Operable independently from Optimizer module | Phase 3 | Pending |
+| OPT-01 | EOS integration | Phase 4 | Pending |
+| OPT-02 | EMHASS integration | Phase 4 | Pending |
+| OPT-03 | EVCC integration | Phase 5 | Pending |
+| OPT-04 | Market price optimization with schedules | Phase 4 | Pending |
+| OPT-05 | Grid import optimization (dynamic/multi-window/fixed tariffs) | Phase 5 | Pending |
+| OPT-06 | Time-variable network charges (Paragraph 14a, Module 3) | Phase 5 | Pending |
+| OPT-07 | MISPEL/Pauschaloption preparation | Phase 5 | Pending |
+| OPT-08 | Schedule engine (PV, battery, EV, heat pump, grid) | Phase 4 | Pending |
+| OPT-09 | Dashboard: live data, DV states, prices, planning, switches | Phase 5 | Pending |
+| OPT-10 | History data from all endpoints | Phase 5 | Pending |
+| OPT-11 | Plan scoring, comparison, winner selection | Phase 4 | Pending |
+| DATA-01 | SQLite with WAL optimization | Phase 2 | Pending |
+| DATA-02 | Multi-resolution data retention | Phase 2 | Pending |
+| DATA-03 | Schema separation via table prefix | Phase 2 | Pending |
+| DATA-04 | Monthly partitioned raw telemetry tables | Phase 2 | Pending |
+| DATA-05 | Rollup engine for automatic aggregation | Phase 2 | Pending |
+| DATA-06 | Secure, performant, fast data structure | Phase 2 | Pending |
+| DEPLOY-01 | Runs on Raspberry Pi (ARM) and x86 | Phase 7 | Pending |
+| DEPLOY-02 | Container deployment possible (Docker Compose) | Phase 7 | Pending |
+| DEPLOY-03 | Native installation supported | Phase 7 | Pending |
+| DEPLOY-04 | Hybrid mode (DVhub native, Optimizer as container) | Phase 7 | Pending |
+| DEPLOY-05 | EOS/EMHASS as bundled installation | Phase 7 | Pending |
+| DEPLOY-06 | Minimal maintenance overhead | Phase 7 | Pending |
+| UI-01 | Preact + HTM as UI framework | Phase 8 | Pending |
+| UI-02 | Settings UI for all configuration | Phase 8 | Pending |
+| UI-03 | Module activation in setup menu | Phase 8 | Pending |
+| UI-04 | Animated power flow diagram | Phase 8 | Pending |
+| UI-05 | EPEX 15-minute resolution | Phase 8 | Pending |
+| UI-06 | Mobile-responsive layout | Phase 8 | Pending |
+| UI-07 | Price overlay on energy timeline | Phase 8 | Pending |
+| UI-08 | Autarky and self-consumption metrics | Phase 8 | Pending |
+| UI-09 | Forecast display (PV + load from EOS/EMHASS) | Phase 8 | Pending |
+| SEC-01 | Modbus TCP Proxy security (AllowList, binding, caps) | Phase 1 | Pending |
+| SEC-02 | Adapter pattern with schema validation | Phase 4 | Pending |
+| SEC-03 | Container version pinning (never :latest) | Phase 4 | Pending |
+| EXEC-01 | Intent-based control (priority chain) | Phase 6 | Pending |
+| EXEC-02 | Execution layer: writes only through Device HAL | Phase 6 | Pending |
+| EXEC-03 | Command logging with readback verification | Phase 6 | Pending |
+| EXEC-04 | Deviation alerting and audit trail | Phase 6 | Pending |
 
 ---
-*Last updated: 2026-03-14 after initialization*
+*Last updated: 2026-03-14 after roadmap creation*
