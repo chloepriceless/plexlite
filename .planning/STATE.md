@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
-stopped_at: Completed 05-03-PLAN.md
-last_updated: "2026-03-14T14:16:39.204Z"
-last_activity: 2026-03-14 -- Completed 05-02 Forecast Broker and MISPEL Tracker
+status: in_progress
+stopped_at: Completed 06-01-PLAN.md
+last_updated: "2026-03-14T14:50:20.943Z"
+last_activity: 2026-03-14 -- Completed 06-01 Arbitrator and Executor Core Modules
 progress:
   total_phases: 8
   completed_phases: 5
-  total_plans: 17
-  completed_plans: 17
-  percent: 100
+  total_plans: 19
+  completed_plans: 18
+  percent: 95
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-14)
 
 **Core value:** Reliable real-time DV interface (measurement delivery, curtailment compliance) AND intelligent price optimization -- all from one box
-**Current focus:** Phase 5: External Integrations
+**Current focus:** Phase 6: Arbitration + Execution
 
 ## Current Position
 
-Phase: 5 of 8 (External Integrations) -- COMPLETE
-Plan: 3 of 3 in current phase -- COMPLETE
-Status: Phase 5 Complete
-Last activity: 2026-03-14 -- Completed 05-03 Service Wiring and API Routes
+Phase: 6 of 8 (Arbitration + Execution)
+Plan: 1 of 2 in current phase -- COMPLETE
+Status: Plan 06-01 Complete, 06-02 remaining
+Last activity: 2026-03-14 -- Completed 06-01 Arbitrator and Executor Core Modules
 
-Progress: [██████████] 100%
+Progress: [██████████] 95%
 
 ## Performance Metrics
 
@@ -66,6 +66,7 @@ Progress: [██████████] 100%
 | Phase 05 P02 | 2min | 2 tasks | 4 files |
 | Phase 05 P01 | 3min | 2 tasks | 5 files |
 | Phase 05 P03 | 3min | 2 tasks | 7 files |
+| Phase 06 P01 | 3min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -129,6 +130,10 @@ Recent decisions affecting current work:
 - [Phase 05]: MISPEL status endpoint in tariff-routes.js (not separate route file) for single small endpoint
 - [Phase 05]: forecastBroker passed as parameter to callOptimizer (module-level function cannot capture closure variables)
 - [Phase 05]: EVCC subscription combines event bus publish and DB persistence in single observer
+- [Phase 06]: Priority map uses fixed constants (system=1, dv=2, manual=3, optimizer=4) not configurable
+- [Phase 06]: Equal priority replaces for freshness (same source can update its own intent)
+- [Phase 06]: READBACK_MAP only maps gridSetpointW->gridPower; DV boolean targets have no readback
+- [Phase 06]: Overridden intents capped at 100; command log capped at 200 entries
 
 ### Pending Todos
 
@@ -143,6 +148,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-14T14:16:39.199Z
-Stopped at: Completed 05-03-PLAN.md
+Last session: 2026-03-14T14:50:20.936Z
+Stopped at: Completed 06-01-PLAN.md
 Resume file: None
