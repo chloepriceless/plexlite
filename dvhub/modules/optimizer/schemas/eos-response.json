@@ -1,0 +1,44 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "eos-response.json",
+  "title": "EOS Optimization Response",
+  "description": "Schema for EOS optimizer API response",
+  "type": "object",
+  "required": ["result"],
+  "properties": {
+    "result": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["start_datetime", "end_datetime"],
+        "properties": {
+          "start_datetime": { "type": "string" },
+          "end_datetime": { "type": "string" },
+          "Eauto_SoC_pro": { "type": "number" },
+          "EAuto_obj": {
+            "type": "object",
+            "properties": {
+              "Wh_pro_Stunde": { "type": "number" }
+            },
+            "additionalProperties": true
+          },
+          "Batteries": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          },
+          "Last_Wh_pro_Stunde": { "type": "number" },
+          "Einspeisung_Wh_pro_Stunde": { "type": "number" },
+          "Akku_Wh_Charge": { "type": "number" },
+          "Akku_Wh_Discharge": { "type": "number" },
+          "Akku_SoC": { "type": "number" },
+          "Kosten_EUR": { "type": "number" }
+        },
+        "additionalProperties": true
+      }
+    }
+  },
+  "additionalProperties": true
+}

@@ -1,0 +1,40 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "emhass-response.json",
+  "title": "EMHASS Optimization Response",
+  "description": "Schema for EMHASS optimizer API response. Permissive -- tighten after container testing.",
+  "type": "object",
+  "required": [],
+  "properties": {
+    "optim_status": { "type": "string" },
+    "P_PV": {
+      "type": "array",
+      "items": { "type": "number" }
+    },
+    "P_Load": {
+      "type": "array",
+      "items": { "type": "number" }
+    },
+    "P_grid_pos": {
+      "type": "array",
+      "items": { "type": "number" }
+    },
+    "P_grid_neg": {
+      "type": "array",
+      "items": { "type": "number" }
+    },
+    "P_batt": {
+      "type": "array",
+      "items": { "type": "number" }
+    },
+    "SOC_opt": {
+      "type": "array",
+      "items": { "type": "number" }
+    },
+    "timestamps": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  },
+  "additionalProperties": true
+}
