@@ -48,6 +48,31 @@ export function loadConfig(configPath) {
     }
   }
 
+  // Database defaults -- ensures config.database.backend always has a value
+  if (!effectiveConfig.database) {
+    effectiveConfig.database = {};
+  }
+  effectiveConfig.database = {
+    backend: 'timescaledb',
+    connectionString: 'postgresql://dvhub:dvhub@localhost:5432/dvhub',
+    dbPath: './data/dvhub-telemetry.sqlite',
+    retention: {
+      rawDays: 7,
+      fiveMinDays: 90,
+      fifteenMinDays: 730,
+      dailyDays: null,
+    },
+    ...effectiveConfig.database,
+  };
+  // Ensure retention sub-object has all defaults even if partially overridden
+  effectiveConfig.database.retention = {
+    rawDays: 7,
+    fiveMinDays: 90,
+    fifteenMinDays: 730,
+    dailyDays: null,
+    ...effectiveConfig.database.retention,
+  };
+
   return {
     rawConfig: loaded.rawConfig,
     config: effectiveConfig
