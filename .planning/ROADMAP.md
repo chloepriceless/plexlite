@@ -139,11 +139,11 @@ Plans:
   3. Full-Docker mode runs the entire stack including DVhub in containers for x86 server deployments
   4. Compose-manager in DVhub can start, stop, and check health of optimizer containers, and optimizer runs are staggered to avoid concurrent CPU saturation on Pi
   5. install.sh uses npm ci with a committed lockfile for reproducible deployments on both ARM and x86
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 07-01: TBD
-- [ ] 07-02: TBD
+- [ ] 07-01-PLAN.md -- Docker Compose, Dockerfile, compose-manager, systemd template
+- [ ] 07-02-PLAN.md -- install.sh enhancement, staggered scheduler, compose lifecycle
 
 ### Phase 8: UI Modernization
 **Goal**: Dashboard is rebuilt with Preact+HTM components providing animated power flow, market price visualization, module configuration, and mobile-responsive operation -- all without a build step
@@ -155,7 +155,7 @@ Plans:
   3. Setup wizard allows module activation/deactivation (DV, Optimizer) and all configuration parameters are accessible through the settings UI
   4. Autarky rate (Autarkiegrad) and self-consumption rate (Eigenverbrauchsquote) display as prominent dashboard metrics
   5. All dashboard pages are mobile-responsive and usable on phone screens without horizontal scrolling
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
 - [ ] 08-01: TBD
