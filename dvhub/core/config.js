@@ -53,7 +53,7 @@ export function loadConfig(configPath) {
     effectiveConfig.database = {};
   }
   effectiveConfig.database = {
-    backend: 'sqlite',
+    backend: 'timescaledb',
     connectionString: 'postgresql://dvhub:dvhub@localhost:5432/dvhub',
     dbPath: process.env.DV_DATA_DIR ? `${process.env.DV_DATA_DIR}/telemetry.sqlite` : './data/telemetry.sqlite',
     retention: {
