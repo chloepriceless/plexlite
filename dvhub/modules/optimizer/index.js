@@ -18,6 +18,10 @@ import { createEvccBridge } from './services/evcc-bridge.js';
 import { createForecastBroker } from './services/forecast-broker.js';
 import { createTariffEngine } from './services/tariff-engine.js';
 import { createMispelTracker } from './services/mispel-tracker.js';
+import { createStaggeredScheduler } from './services/staggered-scheduler.js';
+import { createComposeLifecycle } from './services/compose-lifecycle.js';
+import { resolve, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 /**
  * Create an Optimizer module instance.
@@ -34,6 +38,8 @@ export function createOptimizerModule(config) {
   let tariffEngine = null;
   let mispelTracker = null;
   let evccSubscription = null;
+  let staggeredScheduler = null;
+  let composeLifecycle = null;
 
   return {
     name: 'optimizer',
@@ -154,6 +160,50 @@ export function createOptimizerModule(config) {
         }
       };
 
+      // 5g. Compose lifecycle (if enabled)
+      if (optConfig.compose?.enabled) {
+        const __dirname = dirname(fileURLToPath(import.meta.url));
+        const defaultComposePath = resolve(__dirname, '../../deploy/docker-compose.yaml');
+        composeLifecycle = createComposeLifecycle({
+          composePath: optConfig.compose.composePath || defaultComposePath,
+          profile: optConfig.compose.profile || 'hybrid',
+          log,
+        });
+        await composeLifecycle.start();
+      }
+
+      // 5h. Staggered scheduler (if 2+ adapters)
+      const adapterNames = adapterRegistry.getAll().map(a => a.name);
+      if (optConfig.scheduling?.stagger !== false && adapterNames.length >= 2) {
+        staggeredScheduler = createStaggeredScheduler({
+          adapters: adapterNames,
+          triggerFn: (adapterName) => {
+            const adapter = adapterRegistry.getAll().find(a => a.name === adapterName);
+            if (!adapter) return;
+            const telemetry = ctx.eventBus?.getValue('telemetry') || {};
+            const snapshot = {
+              soc: telemetry.soc ?? 50,
+              pvTotalW: telemetry.pvTotalW ?? 0,
+              loadPowerW: telemetry.loadPowerW ?? 0,
+              batteryPowerW: telemetry.batteryPowerW ?? 0,
+              gridImportW: telemetry.gridImportW ?? 0,
+              gridExportW: telemetry.gridExportW ?? 0,
+              gridTotalW: telemetry.gridTotalW ?? 0,
+              gridSetpointW: telemetry.gridSetpointW ?? 0,
+              minSocPct: telemetry.minSocPct ?? 10,
+              selfConsumptionW: telemetry.selfConsumptionW ?? 0,
+              prices: telemetry.prices || [],
+              timestamps: telemetry.timestamps || [],
+            };
+            callOptimizer(adapter, snapshot, planEngine, forecastBroker, log)
+              .catch(err => log?.warn({ adapter: adapterName, err: err.message }, 'Staggered optimizer call failed'));
+          },
+          intervalMs: optConfig.scheduling?.intervalMs || 3600000,
+          log,
+        });
+        staggeredScheduler.start();
+      }
+
       // 6. Create Fastify plugin wrapper
       const pluginOpts = { planEngine, adapterRegistry, triggerOptimization, evccBridge, forecastBroker, tariffEngine, mispelTracker };
       this.plugin = async function optimizerPluginWrapper(fastify) {
@@ -166,6 +216,8 @@ export function createOptimizerModule(config) {
     },
 
     async destroy() {
+      if (staggeredScheduler) { staggeredScheduler.stop(); staggeredScheduler = null; }
+      if (composeLifecycle) { await composeLifecycle.stop(); composeLifecycle = null; }
       if (evccSubscription) { evccSubscription.unsubscribe(); evccSubscription = null; }
       if (evccBridge) { evccBridge.stop(); evccBridge = null; }
       if (forecastBroker) { forecastBroker.destroy(); forecastBroker = null; }
