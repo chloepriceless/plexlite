@@ -17,7 +17,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 3: DV Module** - Direktvermarktung extraction with provider adapters, measurement export, and curtailment processing (completed 2026-03-14)
 - [ ] **Phase 4: Optimizer Core** - Adapter registry, EOS/EMHASS adapters, plan engine, and plan scoring/selection
 - [x] **Phase 5: External Integrations** - EVCC bridge, forecast broker, tariff models, and MISPEL preparation (completed 2026-03-14)
-- [ ] **Phase 6: Arbitration + Execution** - Intent-based control pipeline with priority resolution, command logging, and audit trail
+- [x] **Phase 6: Arbitration + Execution** - Intent-based control pipeline with priority resolution, command logging, and audit trail (completed 2026-03-14)
 - [ ] **Phase 7: Deployment** - Docker Compose orchestration, hybrid mode, compose-manager, and native install updates
 - [ ] **Phase 8: UI Modernization** - Preact+HTM migration, animated power flow, setup wizard, and mobile-responsive dashboard
 
@@ -174,6 +174,6 @@ Phases execute in numeric order. Phases 3 and 4 share Phase 2 as dependency and 
 | 3. DV Module | 3/3 | Complete   | 2026-03-14 |
 | 4. Optimizer Core | 0/3 | Not started | - |
 | 5. External Integrations | 3/3 | Complete   | 2026-03-14 |
-| 6. Arbitration + Execution | 0/2 | Not started | - |
+| 6. Arbitration + Execution | 2/2 | Complete   | 2026-03-14 |
 | 7. Deployment | 0/2 | Not started | - |
 | 8. UI Modernization | 0/3 | Not started | - |
