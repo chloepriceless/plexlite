@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 05-01-PLAN.md
-last_updated: "2026-03-14T14:09:50.735Z"
+stopped_at: Completed 05-03-PLAN.md
+last_updated: "2026-03-14T14:16:39.204Z"
 last_activity: 2026-03-14 -- Completed 05-02 Forecast Broker and MISPEL Tracker
 progress:
   total_phases: 8
-  completed_phases: 4
+  completed_phases: 5
   total_plans: 17
-  completed_plans: 16
+  completed_plans: 17
   percent: 100
 ---
 
@@ -25,10 +25,10 @@ See: .planning/PROJECT.md (updated 2026-03-14)
 
 ## Current Position
 
-Phase: 5 of 8 (External Integrations) -- IN PROGRESS
-Plan: 2 of 3 in current phase -- COMPLETE
-Status: Executing Phase 5
-Last activity: 2026-03-14 -- Completed 05-02 Forecast Broker and MISPEL Tracker
+Phase: 5 of 8 (External Integrations) -- COMPLETE
+Plan: 3 of 3 in current phase -- COMPLETE
+Status: Phase 5 Complete
+Last activity: 2026-03-14 -- Completed 05-03 Service Wiring and API Routes
 
 Progress: [██████████] 100%
 
@@ -65,6 +65,7 @@ Progress: [██████████] 100%
 | Phase 04 P03 | 6min | 2 tasks | 5 files |
 | Phase 05 P02 | 2min | 2 tasks | 4 files |
 | Phase 05 P01 | 3min | 2 tasks | 5 files |
+| Phase 05 P03 | 3min | 2 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -125,6 +126,9 @@ Recent decisions affecting current work:
 - [Phase 05]: Tariff engine uses startDate/endDate field names matching config.example.json convention
 - [Phase 05]: Module 3 window matching uses Intl.DateTimeFormat for timezone-safe Europe/Berlin resolution
 - [Phase 05]: Period endDate is inclusive (end of day) for user-friendly date range semantics
+- [Phase 05]: MISPEL status endpoint in tariff-routes.js (not separate route file) for single small endpoint
+- [Phase 05]: forecastBroker passed as parameter to callOptimizer (module-level function cannot capture closure variables)
+- [Phase 05]: EVCC subscription combines event bus publish and DB persistence in single observer
 
 ### Pending Todos
 
@@ -139,6 +143,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-14T14:09:50.729Z
-Stopped at: Completed 05-01-PLAN.md
+Last session: 2026-03-14T14:16:39.199Z
+Stopped at: Completed 05-03-PLAN.md
 Resume file: None
