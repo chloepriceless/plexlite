@@ -1,0 +1,14 @@
+{
+  "deye": {
+    "transport": "modbus",
+    "port": 8899,
+    "unitId": 1,
+    "timeoutMs": 1000
+  },
+  "meter": null,
+  "points": {},
+  "controlWrite": {},
+  "dvControl": {
+    "enabled": false
+  }
+}
