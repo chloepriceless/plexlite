@@ -68,11 +68,13 @@ Das System muss zuverlaessig und in Echtzeit die Direktvermarktungs-Schnittstell
 - [ ] Plan-Scoring, Vergleich, automatische Winner-Auswahl zwischen Optimierern
 
 **Datenarchitektur:**
-- [ ] SQLite beibehalten mit WAL-Optimierung (Research-Ergebnis: PostgreSQL nur als optionaler Upgrade-Pfad)
+- [ ] Austauschbare DB-Schicht (Database Adapter Pattern): SQLite Default fuer Pi, TimescaleDB/PostgreSQL fuer Server
+- [ ] SQLite-Backend: WAL-Optimierung, manuelles Partitioning, eigene Rollup-Engine
+- [ ] TimescaleDB-Backend: Continuous Aggregates, native Compression, Retention Policies
 - [ ] Multi-Resolution-Datenhaltung: Raw ~1s (7d), 5min (90d), 15min (2y), Daily (forever)
 - [ ] Schema-Trennung per Table-Prefix: shared_, dv_, opt_, exec_, telemetry_
-- [ ] Monthly partitioned raw-telemetry tables (telemetry_raw_YYYY_MM)
-- [ ] Rollup-Engine fuer automatische Aggregation
+- [ ] Monthly partitioned raw-telemetry tables (telemetry_raw_YYYY_MM bei SQLite, Hypertables bei TimescaleDB)
+- [ ] Rollup-Engine fuer automatische Aggregation (SQLite manuell, TimescaleDB Continuous Aggregates)
 - [ ] Sichere, leistungsfaehige, schnelle Datenstruktur
 
 **Deployment:**
@@ -98,6 +100,8 @@ Das System muss zuverlaessig und in Echtzeit die Direktvermarktungs-Schnittstell
 - [ ] Modbus-TCP-Proxy: IP-AllowList, Interface-Binding, Buffer-Size-Caps
 - [ ] Adapter-Pattern fuer externe APIs mit Schema-Validierung (EOS/EMHASS API-Drift)
 - [ ] Container-Version-Pinning (nie :latest Tag)
+- [ ] User-Rollen-System: readonly, user, admin mit unterschiedlichen Berechtigungen
+- [ ] Auth-Token fuer WebSocket-Handshake (Remote-Zugriff via VPN)
 
 **Arbitrierung + Execution:**
 - [ ] Intent-basierte Steuerung: Safety > DV > Manual > Optimizer > Fallback
@@ -120,13 +124,17 @@ Das System muss zuverlaessig und in Echtzeit die Direktvermarktungs-Schnittstell
 
 **Bestehende Codebase:** Monolithischer Node.js Server (~2800 Zeilen server.js), ES Modules, kein Framework, node:sqlite fuer Telemetrie, Vanilla HTML/JS Frontend. Funktioniert produktiv mit Victron-Hardware und LUOX-Direktvermarkter.
 
+**Zielplattform:** Primaer x86 Server/VM/NAS, muss aber auch auf Raspberry Pi (ARM64, 4GB) laufen fuer GPIO-Zugriff und Edge-Deployments.
+
+**Neue Dependencies (v2):** Fastify (HTTP + Ajv Validierung + Pino Logging), @fastify/websocket (ws), RxJS (interner Event-Bus mit BehaviorSubject). Optional: pg (PostgreSQL-Treiber bei TimescaleDB).
+
 **Vorhandene Architektur-Dokumente:** Vier detaillierte Design-Dokumente existieren unter `docs/plans/2026-03-10-*`:
-- PostgreSQL Schema Blueprint (4 Schemas: shared, dv, opt, exec)
+- PostgreSQL Schema Blueprint (4 Schemas: shared, dv, opt, exec) — dient als Referenz fuer TimescaleDB-Backend
 - Optimizer Orchestrator Implementation Plan (12 Tasks)
 - Optimizer Orchestrator Design (6-Layer Architektur)
 - Data Architecture Masterlist (MVP + Phase 2 Tabellen)
 
-Diese Dokumente dienen als Referenz, sind aber nicht bindend — insbesondere die DB-Wahl (PostgreSQL vs. Alternativen) soll neu recherchiert werden.
+Diese Dokumente dienen als Referenz. DB ist austauschbar: SQLite (Pi-Default) oder TimescaleDB/PostgreSQL (Server-Empfehlung).
 
 **Codebase-Map:** Detaillierte Analyse unter `.planning/codebase/` (7 Dokumente, 1360 Zeilen).
 
@@ -155,14 +163,18 @@ Diese Dokumente dienen als Referenz, sind aber nicht bindend — insbesondere di
 |----------|-----------|---------|
 | 3 Module: Gateway + DV + Optimierung | Universalitaet und unabhaengiger Betrieb, mindestens ein Modul neben Gateway aktiv | ✓ Confirmed — In-Process Modular Monolith (kein Microservice) |
 | Hersteller-Configs externalisiert | Keine hart-verdrahteten Register im Code, User kann eigene Configs anlegen | ✓ Confirmed — Device HAL mit Driver-Interface |
-| DB: SQLite beibehalten, PostgreSQL optional | ~86K rows/day locker in SQLite, kein TSDB-Overhead auf Pi, PG als Upgrade-Pfad | ✓ Decided — SQLite + WAL + Partitioning |
-| UI: Preact + HTM (kein Build-Step) | 5KB total, React-API, tagged templates statt JSX, inkrementelle Migration | ✓ Decided — Preact 10.x + HTM 3.x |
+| DB: Austauschbare DB-Schicht | SQLite Default (Pi), TimescaleDB/PostgreSQL fuer Server. Database Adapter Pattern | ✓ Decided — SQLite + TimescaleDB via Adapter |
+| UI: Preact + HTM (kein Build-Step) | 5KB total, React-API, tagged templates statt JSX, inkrementelle Migration. Beste Wahl nach Vergleich mit Vue, Svelte, Alpine, Lit, Solid | ✓ Decided — Preact 10.x + HTM 3.x |
 | Deployment: Hybrid als Default | DVhub nativ via systemd, EOS/EMHASS/EVCC als Docker Container mit CPU/Mem Limits | ✓ Decided — Hybrid Default, Full-Docker optional |
 | Modul-Trennung als erste Prioritaet | Architektur-Fundament muss stehen bevor Features drauf gebaut werden | ✓ Confirmed |
 | Victron + Deye + generisch fuer v1 | Victron als Hauptplattform, Deye als zweiter Hersteller, generisch fuer alles andere | ✓ Confirmed — Fronius als bester erster Non-Victron Kandidat |
-| EventEmitter als interner Bus | Native Node.js, zero Dependencies, genuegt fuer Single-Process Decoupling | ✓ Decided |
+| Interner Bus: RxJS BehaviorSubject | Synchrone Reads via getValue() fuer DV-Echtzeit-Pfad, Operatoren fuer komplexe Event-Flows, 1 npm-Paket | ✓ Decided — RxJS statt EventEmitter |
+| HTTP-Framework: Fastify | Ersetzt 50 if/else-Routing-Branches, bringt Ajv (Validierung) + Pino (Logging) mit. Bester Wert pro Dependency | ✓ Decided — Fastify + @fastify/websocket |
+| WebSocket: ws (via @fastify/websocket) | Standard-WebSocket, universell, kein eigenes Protokoll. Socket.io Overkill fuer LAN+VPN Use Case | ✓ Decided — ws, kein Socket.io |
 | DV-Echtzeit-Pfad: synchron in-process | DV-Messwert darf NICHT async werden — Vertragliche Pflicht, Latenz-Budget 2x pollInterval | ✓ Architectural Rule |
-| Keine neuen Server-Dependencies | EventEmitter, fetch, node:sqlite, node:http — alles Node.js built-ins | ✓ Decided |
+| Dependencies: Strategisch minimal | Fastify + RxJS + ws als Kern-Dependencies. pg nur bei TimescaleDB. Keine Express, Socket.io, Winston, PM2 | ✓ Decided |
+| User-Rollen | readonly / user / admin — Grundstruktur fuer Remote-Zugriff via VPN vorbereiten | ✓ Decided — Auth-Token bei WS-Handshake |
+| MQTT nur fuer Geraetekommunikation | MQTT (Mosquitto) bleibt fuer Hardware-Anbindung. Interner Bus ist RxJS, nicht MQTT | ✓ Decided |
 
 ## Traceability
 
@@ -196,11 +208,11 @@ Diese Dokumente dienen als Referenz, sind aber nicht bindend — insbesondere di
 | OPT-09 | Dashboard: live data, DV states, prices, planning, switches | Phase 5 | Pending |
 | OPT-10 | History data from all endpoints | Phase 5 | Pending |
 | OPT-11 | Plan scoring, comparison, winner selection | Phase 4 | Pending |
-| DATA-01 | SQLite with WAL optimization | Phase 2 | Pending |
+| DATA-01 | Database Adapter Pattern (austauschbar: SQLite / TimescaleDB) | Phase 2 | Pending |
 | DATA-02 | Multi-resolution data retention | Phase 2 | Pending |
 | DATA-03 | Schema separation via table prefix | Phase 2 | Pending |
-| DATA-04 | Monthly partitioned raw telemetry tables | Phase 2 | Pending |
-| DATA-05 | Rollup engine for automatic aggregation | Phase 2 | Pending |
+| DATA-04 | Monthly partitioned raw telemetry (SQLite) / Hypertables (TimescaleDB) | Phase 2 | Pending |
+| DATA-05 | Rollup engine (manual for SQLite, Continuous Aggregates for TimescaleDB) | Phase 2 | Pending |
 | DATA-06 | Secure, performant, fast data structure | Phase 2 | Pending |
 | DEPLOY-01 | Runs on Raspberry Pi (ARM) and x86 | Phase 7 | Pending |
 | DEPLOY-02 | Container deployment possible (Docker Compose) | Phase 7 | Pending |
@@ -220,6 +232,8 @@ Diese Dokumente dienen als Referenz, sind aber nicht bindend — insbesondere di
 | SEC-01 | Modbus TCP Proxy security (AllowList, binding, caps) | Phase 1 | Pending |
 | SEC-02 | Adapter pattern with schema validation | Phase 4 | Pending |
 | SEC-03 | Container version pinning (never :latest) | Phase 4 | Pending |
+| SEC-04 | User roles: readonly, user, admin with permissions | Phase 1 | Pending |
+| SEC-05 | Auth token for WebSocket handshake (VPN remote access) | Phase 1 | Pending |
 | EXEC-01 | Intent-based control (priority chain) | Phase 6 | Pending |
 | EXEC-02 | Execution layer: writes only through Device HAL | Phase 6 | Pending |
 | EXEC-03 | Command logging with readback verification | Phase 6 | Pending |

@@ -24,15 +24,17 @@ Decimal phases appear between their surrounding integers in numeric order.
 ## Phase Details
 
 ### Phase 1: Foundation
-**Goal**: The monolithic server.js is decomposed into a module-aware bootstrap (~200 lines) with a working Gateway core, event bus, Device HAL, and module registry -- all existing functionality preserved
+**Goal**: The monolithic server.js is decomposed into a module-aware bootstrap (~200 lines) with a working Gateway core, RxJS event bus, Fastify HTTP server, Device HAL, module registry, and user role system -- all existing functionality preserved
 **Depends on**: Nothing (first phase)
-**Requirements**: ARCH-01, ARCH-02, ARCH-04, ARCH-05, GW-01, GW-02, GW-03, GW-05, GW-06, GW-07, SEC-01
+**Requirements**: ARCH-01, ARCH-02, ARCH-04, ARCH-05, GW-01, GW-02, GW-03, GW-05, GW-06, GW-07, SEC-01, SEC-04, SEC-05
 **Success Criteria** (what must be TRUE):
   1. server.js is under 250 lines and only bootstraps modules via the module registry
-  2. Gateway module starts, polls hardware via Device HAL (Victron driver), and emits telemetry events on the internal EventEmitter bus
-  3. Manufacturer configs are loaded from external JSON files and the Victron driver reads/writes through the HAL interface without brand-specific code in business logic
-  4. Existing HTTP API endpoints respond identically to v1 behavior (no regressions in /api/status, /api/config, etc.)
-  5. Modbus TCP proxy enforces IP AllowList, buffer size caps, and interface binding
+  2. Gateway module starts, polls hardware via Device HAL (Victron driver), and publishes telemetry via RxJS BehaviorSubjects -- DV module can synchronously read current meter values via getValue()
+  3. Fastify replaces raw node:http with proper route registration, Ajv schema validation, and Pino structured logging
+  4. WebSocket endpoint via @fastify/websocket pushes real-time updates to dashboard, with auth token validation and user role filtering (readonly/user/admin)
+  5. Manufacturer configs are loaded from external JSON files and the Victron driver reads/writes through the HAL interface without brand-specific code in business logic
+  6. Existing HTTP API endpoints respond identically to v1 behavior (no regressions in /api/status, /api/config, etc.)
+  7. Modbus TCP proxy enforces IP AllowList, buffer size caps, and interface binding
 **Plans**: TBD
 
 Plans:
@@ -41,14 +43,17 @@ Plans:
 - [ ] 01-03: TBD
 
 ### Phase 2: Data Architecture
-**Goal**: Telemetry storage supports multi-resolution retention with automatic rollups and partitioned raw tables, running efficiently on Raspberry Pi with SQLite
+**Goal**: Telemetry storage supports multi-resolution retention with automatic rollups via a Database Adapter Pattern -- SQLite backend for Pi, TimescaleDB/PostgreSQL backend for servers, both behind the same interface
 **Depends on**: Phase 1
-**Requirements**: DATA-01, DATA-02, DATA-03, DATA-04, DATA-05, DATA-06
+**Requirements**: DATA-01, DATA-02, DATA-03, DATA-04, DATA-05, DATA-06, GW-04
 **Success Criteria** (what must be TRUE):
-  1. SQLite runs with WAL mode and optimized PRAGMAs, and raw telemetry is stored in monthly partitioned tables (telemetry_raw_YYYY_MM)
-  2. Rollup engine automatically aggregates raw samples into 5-min, 15-min, and daily tables on schedule
-  3. Retention policy enforces cleanup: raw data older than 7 days is purged after rollup confirmation, 5-min data retained 90 days, 15-min data retained 2 years
-  4. All tables follow schema-prefix convention (shared_, dv_, opt_, exec_, telemetry_) and queries against 30-day history return in under 500ms on Pi hardware
+  1. Database Adapter interface abstracts storage operations -- modules call adapter methods, never raw SQL specific to one backend
+  2. SQLite backend: WAL mode, optimized PRAGMAs, monthly partitioned raw tables (telemetry_raw_YYYY_MM), manual rollup engine
+  3. TimescaleDB backend: Hypertables for telemetry, Continuous Aggregates for 5min/15min/daily rollups, native compression and retention policies
+  4. Rollup engine automatically aggregates raw samples into 5-min, 15-min, and daily resolution on schedule (manual for SQLite, Continuous Aggregates for TimescaleDB)
+  5. Retention policy enforces cleanup: raw data older than 7 days is purged after rollup confirmation, 5-min data retained 90 days, 15-min data retained 2 years
+  6. All tables follow schema-prefix convention (shared_, dv_, opt_, exec_, telemetry_) and queries against 30-day history return in under 500ms on Pi hardware
+  7. Backend selection via config: `database.backend: "sqlite" | "timescaledb"`
 **Plans**: TBD
 
 Plans:
