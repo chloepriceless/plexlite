@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
-stopped_at: Completed 04-03-PLAN.md
-last_updated: "2026-03-14T11:40:42.967Z"
-last_activity: 2026-03-14 -- Completed 04-03 Module Wiring and Routes
+status: in-progress
+stopped_at: Completed 05-02-PLAN.md
+last_updated: "2026-03-14T14:07:35Z"
+last_activity: 2026-03-14 -- Completed 05-02 Forecast Broker and MISPEL Tracker
 progress:
   total_phases: 8
   completed_phases: 4
   total_plans: 14
-  completed_plans: 14
+  completed_plans: 15
   percent: 100
 ---
 
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-14)
 
 **Core value:** Reliable real-time DV interface (measurement delivery, curtailment compliance) AND intelligent price optimization -- all from one box
-**Current focus:** Phase 4: Optimizer Core
+**Current focus:** Phase 5: External Integrations
 
 ## Current Position
 
-Phase: 4 of 8 (Optimizer Core) -- COMPLETE
-Plan: 3 of 3 in current phase -- COMPLETE
-Status: Phase 4 Complete
-Last activity: 2026-03-14 -- Completed 04-03 Module Wiring and Routes
+Phase: 5 of 8 (External Integrations) -- IN PROGRESS
+Plan: 2 of 3 in current phase -- COMPLETE
+Status: Executing Phase 5
+Last activity: 2026-03-14 -- Completed 05-02 Forecast Broker and MISPEL Tracker
 
 Progress: [██████████] 100%
 
@@ -63,6 +63,7 @@ Progress: [██████████] 100%
 | Phase 04 P01 | 4min | 2 tasks | 9 files |
 | Phase 04 P02 | 3min | 2 tasks | 4 files |
 | Phase 04 P03 | 6min | 2 tasks | 5 files |
+| Phase 05 P02 | 2min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -116,6 +117,9 @@ Recent decisions affecting current work:
 - [Phase 04]: Plan engine uses BehaviorSubject for synchronous getValue() reads matching event-bus pattern
 - [Phase 04]: Fire-and-forget optimizer calls use AbortSignal.timeout(5000) to prevent blocking
 - [Phase 04]: Adapters enabled by default (eos/emhass.enabled !== false), plugin wrapper closure in init()
+- [Phase 05]: Forecast broker only updates when plan.meta carries non-empty arrays (no-overwrite for missing data)
+- [Phase 05]: MISPEL tracker disabled by default per BNetzA rules not yet finalized
+- [Phase 05]: Annual cap uses configurable capKwhPerKwp defaulting to 500 for future regulation changes
 
 ### Pending Todos
 
@@ -130,6 +134,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-14T11:40:42.963Z
-Stopped at: Completed 04-03-PLAN.md
+Last session: 2026-03-14T14:07:35Z
+Stopped at: Completed 05-02-PLAN.md
 Resume file: None
