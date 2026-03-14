@@ -391,19 +391,224 @@ export function createSqliteAdapter(dbConfig = {}) {
     return results;
   }
 
-  async function runRollups(_opts) {
-    assertOpen();
-    return { rolledUp: 0 };
+  /**
+   * Ensure the _rollup_state tracking table exists.
+   */
+  function ensureRollupState() {
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS _rollup_state (
+        resolution TEXT PRIMARY KEY,
+        last_rolled_ts TEXT NOT NULL
+      )
+    `);
   }
 
-  async function runRetention(_opts) {
+  /**
+   * Get the last rolled-up timestamp for a resolution, or a very old date.
+   */
+  function getLastRolledTs(resolution) {
+    ensureRollupState();
+    const row = db.prepare('SELECT last_rolled_ts FROM _rollup_state WHERE resolution = ?').get(resolution);
+    return row ? row.last_rolled_ts : '1970-01-01T00:00:00Z';
+  }
+
+  /**
+   * Update the last rolled-up timestamp for a resolution.
+   */
+  function setLastRolledTs(resolution, ts) {
+    db.prepare('INSERT OR REPLACE INTO _rollup_state (resolution, last_rolled_ts) VALUES (?, ?)').run(resolution, ts);
+  }
+
+  /**
+   * List all existing raw partition tables from sqlite_master.
+   */
+  function listRawTables() {
+    return db.prepare(
+      "SELECT name FROM sqlite_master WHERE type='table' AND name LIKE 'telemetry_raw_%' ORDER BY name"
+    ).all().map(r => r.name);
+  }
+
+  async function runRollups(opts = {}) {
     assertOpen();
-    return { deleted: 0 };
+    const now = opts.now ? (opts.now instanceof Date ? opts.now : new Date(opts.now)) : new Date();
+    const nowIso = now.toISOString();
+    let totalRolledUp = 0;
+
+    // --- 5-minute rollups (raw -> telemetry_5min) ---
+    const last5min = getLastRolledTs('5min');
+    const rawTables = listRawTables();
+
+    if (rawTables.length > 0) {
+      db.exec('BEGIN');
+      try {
+        for (const table of rawTables) {
+          const rows = db.prepare(`
+            SELECT
+              strftime('%Y-%m-%dT%H:', ts_utc) || printf('%02d', (CAST(strftime('%M', ts_utc) AS INTEGER) / 5) * 5) || ':00Z' AS bucket,
+              series_key,
+              AVG(value_num) AS avg_value,
+              MIN(value_num) AS min_value,
+              MAX(value_num) AS max_value,
+              COUNT(*) AS sample_count,
+              unit
+            FROM ${table}
+            WHERE value_num IS NOT NULL AND ts_utc >= ? AND ts_utc < ?
+            GROUP BY bucket, series_key, unit
+          `).all(last5min, nowIso);
+
+          const stmt = db.prepare(`
+            INSERT OR REPLACE INTO telemetry_5min (bucket, series_key, avg_value, min_value, max_value, sample_count, unit)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+          `);
+          for (const r of rows) {
+            stmt.run(r.bucket, r.series_key, r.avg_value, r.min_value, r.max_value, r.sample_count, r.unit);
+            totalRolledUp++;
+          }
+        }
+        setLastRolledTs('5min', nowIso);
+        db.exec('COMMIT');
+      } catch (err) {
+        db.exec('ROLLBACK');
+        throw err;
+      }
+    }
+
+    // --- 15-minute rollups (telemetry_5min -> telemetry_15min) ---
+    const last15min = getLastRolledTs('15min');
+    db.exec('BEGIN');
+    try {
+      const rows15 = db.prepare(`
+        SELECT
+          strftime('%Y-%m-%dT%H:', bucket) || printf('%02d', (CAST(strftime('%M', bucket) AS INTEGER) / 15) * 15) || ':00Z' AS bucket15,
+          series_key,
+          SUM(avg_value * sample_count) / SUM(sample_count) AS avg_value,
+          MIN(min_value) AS min_value,
+          MAX(max_value) AS max_value,
+          SUM(sample_count) AS sample_count,
+          unit
+        FROM telemetry_5min
+        WHERE bucket >= ? AND bucket < ?
+        GROUP BY bucket15, series_key, unit
+      `).all(last15min, nowIso);
+
+      const stmt15 = db.prepare(`
+        INSERT OR REPLACE INTO telemetry_15min (bucket, series_key, avg_value, min_value, max_value, sample_count, unit)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+      `);
+      for (const r of rows15) {
+        stmt15.run(r.bucket15, r.series_key, r.avg_value, r.min_value, r.max_value, r.sample_count, r.unit);
+        totalRolledUp++;
+      }
+      setLastRolledTs('15min', nowIso);
+      db.exec('COMMIT');
+    } catch (err) {
+      db.exec('ROLLBACK');
+      throw err;
+    }
+
+    // --- Daily rollups (telemetry_15min -> telemetry_daily) ---
+    const lastDaily = getLastRolledTs('daily');
+    db.exec('BEGIN');
+    try {
+      const rowsDaily = db.prepare(`
+        SELECT
+          strftime('%Y-%m-%dT00:00:00Z', bucket) AS bucket_day,
+          series_key,
+          SUM(avg_value * sample_count) / SUM(sample_count) AS avg_value,
+          MIN(min_value) AS min_value,
+          MAX(max_value) AS max_value,
+          SUM(sample_count) AS sample_count,
+          unit
+        FROM telemetry_15min
+        WHERE bucket >= ? AND bucket < ?
+        GROUP BY bucket_day, series_key, unit
+      `).all(lastDaily, nowIso);
+
+      const stmtDaily = db.prepare(`
+        INSERT OR REPLACE INTO telemetry_daily (bucket, series_key, avg_value, min_value, max_value, sample_count, unit)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+      `);
+      for (const r of rowsDaily) {
+        stmtDaily.run(r.bucket_day, r.series_key, r.avg_value, r.min_value, r.max_value, r.sample_count, r.unit);
+        totalRolledUp++;
+      }
+      setLastRolledTs('daily', nowIso);
+      db.exec('COMMIT');
+    } catch (err) {
+      db.exec('ROLLBACK');
+      throw err;
+    }
+
+    return { rolledUp: totalRolledUp };
+  }
+
+  async function runRetention(opts = {}) {
+    assertOpen();
+    const now = opts.now ? (opts.now instanceof Date ? opts.now : new Date(opts.now)) : new Date();
+    const retention = opts.retention || dbConfig.retention || {
+      rawDays: 7,
+      fiveMinDays: 90,
+      fifteenMinDays: 730,
+      dailyDays: null
+    };
+    let totalDeleted = 0;
+
+    // --- Raw data retention: drop partition tables older than rawDays ---
+    if (retention.rawDays != null) {
+      const rawCutoff = new Date(now.getTime() - retention.rawDays * 86400_000);
+      const rawTables = listRawTables();
+      for (const table of rawTables) {
+        // Extract year/month from table name: telemetry_raw_YYYY_MM
+        const match = table.match(/telemetry_raw_(\d{4})_(\d{2})/);
+        if (!match) continue;
+        const year = parseInt(match[1], 10);
+        const month = parseInt(match[2], 10);
+        // End of that month
+        const tableEnd = new Date(Date.UTC(year, month, 0, 23, 59, 59));
+        if (tableEnd < rawCutoff) {
+          // Count rows before dropping
+          const countRow = db.prepare(`SELECT count(*) as cnt FROM ${table}`).get();
+          totalDeleted += countRow.cnt;
+          db.exec(`DROP TABLE IF EXISTS ${table}`);
+          knownRawTables.delete(table);
+        }
+      }
+    }
+
+    // --- 5-min data retention ---
+    if (retention.fiveMinDays != null) {
+      const fiveMinCutoff = new Date(now.getTime() - retention.fiveMinDays * 86400_000);
+      const cutoffIso = fiveMinCutoff.toISOString();
+      const result = db.prepare('DELETE FROM telemetry_5min WHERE bucket < ?').run(cutoffIso);
+      totalDeleted += result.changes;
+    }
+
+    // --- 15-min data retention ---
+    if (retention.fifteenMinDays != null) {
+      const fifteenMinCutoff = new Date(now.getTime() - retention.fifteenMinDays * 86400_000);
+      const cutoffIso = fifteenMinCutoff.toISOString();
+      const result = db.prepare('DELETE FROM telemetry_15min WHERE bucket < ?').run(cutoffIso);
+      totalDeleted += result.changes;
+    }
+
+    // --- Daily data: no deletion when dailyDays is null (retained forever) ---
+    if (retention.dailyDays != null) {
+      const dailyCutoff = new Date(now.getTime() - retention.dailyDays * 86400_000);
+      const cutoffIso = dailyCutoff.toISOString();
+      const result = db.prepare('DELETE FROM telemetry_daily WHERE bucket < ?').run(cutoffIso);
+      totalDeleted += result.changes;
+    }
+
+    return { deleted: totalDeleted };
   }
 
   async function runCompression(_opts) {
     assertOpen();
-    // No-op for SQLite
+    db.exec('PRAGMA optimize');
+    // VACUUM only on file-backed databases (not :memory:)
+    if (dbPath !== ':memory:') {
+      db.exec('VACUUM');
+    }
   }
 
   function getBackendInfo() {
