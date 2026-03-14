@@ -110,10 +110,9 @@ const IS_WEB_PROCESS = PROCESS_ROLE === 'web' || PROCESS_ROLE === 'monolith';
 const IS_RUNTIME_PROCESS = PROCESS_ROLE === 'runtime-worker' || PROCESS_ROLE === 'monolith';
 
 const state = {
-  dvRegs: { 0: 0, 1: 0, 3: 0, 4: 0 },
-  ctrl: { forcedOff: false, offUntil: 0, lastSignal: 'init', updatedAt: Date.now() },
+  // DV state extracted to dvhub/modules/dv/ (Plan 03-03)
+  ctrl: { negativePriceActive: false },
   keepalive: {
-    modbusLastQuery: null,
     appPulse: { periodSec: cfg.keepalivePulseSec }
   },
   meter: { ok: false, updatedAt: 0, raw: [], grid_l1_w: 0, grid_l2_w: 0, grid_l3_w: 0, grid_total_w: 0, error: null },
@@ -618,9 +617,9 @@ function buildCurrentRuntimeSnapshot() {
 function buildCurrentStatusPayload({ now = Date.now(), runtimeSnapshot = buildCurrentRuntimeSnapshot() } = {}) {
   return {
     now: Number(now),
-    dvControlValue: controlValue(),
-    dvRegs: state.dvRegs,
-    ctrl: { ...state.ctrl, dvControl: state.ctrl.dvControl || null },
+    // DV control value and registers are now provided by the DV module (/api/dv/status)
+    dvControlValue: 1,
+    ctrl: { ...state.ctrl },
     keepalive: state.keepalive,
     meter: runtimeSnapshot.meter,
     victron: runtimeSnapshot.victron,
@@ -826,11 +825,7 @@ function resolveLogLimit(rawLimit, defaultLimit = 20, maxLimit = 200) {
   return Math.min(Math.floor(limit), maxLimit);
 }
 
-function u16(v) {
-  let x = Math.trunc(Number(v) || 0);
-  if (x < 0) x += 0x10000;
-  return x & 0xffff;
-}
+// u16() has been extracted to dvhub/modules/dv/dv-state.js
 function s16(v) {
   const x = Number(v) & 0xffff;
   return x >= 0x8000 ? x - 0x10000 : x;
@@ -894,233 +889,7 @@ function gridDirection(value) {
   return exporting ? { mode: 'feed_in', label: 'Einspeisung' } : { mode: 'grid_import', label: 'Netzbezug' };
 }
 
-function expireLeaseIfNeeded() {
-  if (state.ctrl.forcedOff && Date.now() > state.ctrl.offUntil) {
-    state.ctrl.forcedOff = false;
-    state.ctrl.offUntil = 0;
-    state.ctrl.lastSignal = 'lease_expired';
-    state.ctrl.updatedAt = Date.now();
-    pushLog('ctrl_lease_expired');
-    applyDvVictronControl(true);
-  }
-}
-
-function setForcedOff(reason) {
-  state.ctrl.forcedOff = true;
-  state.ctrl.offUntil = Date.now() + cfg.offLeaseMs;
-  state.ctrl.lastSignal = reason;
-  state.ctrl.updatedAt = Date.now();
-  pushLog('ctrl_off', { reason, offUntil: new Date(state.ctrl.offUntil).toISOString() });
-  applyDvVictronControl(false);
-}
-
-function clearForcedOff(reason) {
-  state.ctrl.forcedOff = false;
-  state.ctrl.offUntil = 0;
-  state.ctrl.lastSignal = reason;
-  state.ctrl.updatedAt = Date.now();
-  pushLog('ctrl_on', { reason });
-  applyDvVictronControl(true);
-}
-
-async function applyDvVictronControl(feedIn) {
-  const dc = cfg.dvControl;
-  if (!dc?.enabled) return;
-  const results = {};
-
-  // Feed excess DC-coupled PV into grid: 1 = feed, 0 = block
-  if (dc.feedExcessDcPv?.enabled) {
-    const val = feedIn ? 1 : 0;
-    try {
-      if (transport.type === 'mqtt') {
-        await transport.mqttWrite('feedExcessDcPv', val);
-      } else {
-        await transport.mbWriteSingle({
-          host: dc.feedExcessDcPv.host, port: dc.feedExcessDcPv.port,
-          unitId: dc.feedExcessDcPv.unitId, address: dc.feedExcessDcPv.address,
-          value: val, timeoutMs: dc.feedExcessDcPv.timeoutMs
-        });
-      }
-      results.feedExcessDcPv = { ok: true, value: val };
-      pushLog('dv_victron_write', { register: 'feedExcessDcPv', address: dc.feedExcessDcPv.address, value: val, feedIn });
-    } catch (e) {
-      results.feedExcessDcPv = { ok: false, error: e.message };
-      pushLog('dv_victron_write_error', { register: 'feedExcessDcPv', error: e.message });
-    }
-  }
-
-  // Don't feed excess AC-coupled PV into grid: 1 = block, 0 = allow
-  if (dc.dontFeedExcessAcPv?.enabled) {
-    const val = feedIn ? 0 : 1;
-    try {
-      if (transport.type === 'mqtt') {
-        await transport.mqttWrite('dontFeedExcessAcPv', val);
-      } else {
-        await transport.mbWriteSingle({
-          host: dc.dontFeedExcessAcPv.host, port: dc.dontFeedExcessAcPv.port,
-          unitId: dc.dontFeedExcessAcPv.unitId, address: dc.dontFeedExcessAcPv.address,
-          value: val, timeoutMs: dc.dontFeedExcessAcPv.timeoutMs
-        });
-      }
-      results.dontFeedExcessAcPv = { ok: true, value: val };
-      pushLog('dv_victron_write', { register: 'dontFeedExcessAcPv', address: dc.dontFeedExcessAcPv.address, value: val, feedIn });
-    } catch (e) {
-      results.dontFeedExcessAcPv = { ok: false, error: e.message };
-      pushLog('dv_victron_write_error', { register: 'dontFeedExcessAcPv', error: e.message });
-    }
-  }
-
-  state.ctrl.dvControl = { feedIn, ...results, at: Date.now() };
-}
-
-function controlValue() {
-  expireLeaseIfNeeded();
-  return state.ctrl.forcedOff ? 0 : 1;
-}
-
-function setReg(addr, value) { state.dvRegs[addr] = u16(value); }
-function getReg(addr) { return u16(state.dvRegs[addr] ?? 0); }
-
-function buildException(tid, unit, fc, code) {
-  const b = Buffer.alloc(9);
-  b.writeUInt16BE(tid, 0);
-  b.writeUInt16BE(0, 2);
-  b.writeUInt16BE(3, 4);
-  b.writeUInt8(unit, 6);
-  b.writeUInt8((fc | 0x80) & 0xff, 7);
-  b.writeUInt8(code, 8);
-  return b;
-}
-
-function buildReadResp(tid, unit, fc, addr, qty) {
-  const byteCount = qty * 2;
-  const out = Buffer.alloc(9 + byteCount);
-  out.writeUInt16BE(tid, 0);
-  out.writeUInt16BE(0, 2);
-  out.writeUInt16BE(3 + byteCount, 4);
-  out.writeUInt8(unit, 6);
-  out.writeUInt8(fc, 7);
-  out.writeUInt8(byteCount, 8);
-  const regs = [];
-  for (let i = 0; i < qty; i++) {
-    const v = getReg(addr + i);
-    regs.push(v);
-    out.writeUInt16BE(v, 9 + i * 2);
-  }
-  return { out, regs };
-}
-
-function handleWriteSignal(addr, values) {
-  if (addr === 0 && values.length >= 2) {
-    if (values[0] === 0 && values[1] === 0) return setForcedOff('fc16_addr0_0000');
-    if (values[0] === 0xffff && values[1] === 0xffff) return clearForcedOff('fc16_addr0_ffff');
-  }
-  if (addr === 3 && values.length >= 1) {
-    if (values[0] === 1) return setForcedOff('fc16_addr3_0001');
-    if (values[0] === 0) return clearForcedOff('fc16_addr3_0000');
-  }
-}
-
-function rememberModbusQuery({ remote, fc, addr, qty, sample }) {
-  state.keepalive.modbusLastQuery = {
-    ts: Date.now(),
-    remote,
-    fc,
-    addr,
-    qty,
-    sample
-  };
-}
-
-function processModbusFrame(frame, remote) {
-  if (frame.length < 8) return null;
-  const tid = frame.readUInt16BE(0);
-  const pid = frame.readUInt16BE(2);
-  const len = frame.readUInt16BE(4);
-  if (pid !== 0 || len < 2 || frame.length < 6 + len) return null;
-  const unit = frame.readUInt8(6);
-  const fc = frame.readUInt8(7);
-
-  expireLeaseIfNeeded();
-
-  if (fc === 3 || fc === 4) {
-    if (len < 6) return buildException(tid, unit, fc, 3);
-    const addr = frame.readUInt16BE(8);
-    const qty = frame.readUInt16BE(10);
-    if (qty < 1 || qty > 125) return buildException(tid, unit, fc, 3);
-    const { out, regs } = buildReadResp(tid, unit, fc, addr, qty);
-    rememberModbusQuery({ remote, fc, addr, qty, sample: regs.slice(0, 8) });
-    return out;
-  }
-
-  if (fc === 6) {
-    if (len < 6) return buildException(tid, unit, fc, 3);
-    const addr = frame.readUInt16BE(8);
-    const val = frame.readUInt16BE(10);
-    setReg(addr, val);
-    handleWriteSignal(addr, [val]);
-    pushLog('modbus_fc6', { remote, addr, value: val, forcedOff: state.ctrl.forcedOff });
-    return frame.subarray(0, 12);
-  }
-
-  if (fc === 16) {
-    if (len < 7) return buildException(tid, unit, fc, 3);
-    const addr = frame.readUInt16BE(8);
-    const qty = frame.readUInt16BE(10);
-    const bc = frame.readUInt8(12);
-    if (bc !== qty * 2) return buildException(tid, unit, fc, 3);
-    if (13 + bc > 6 + len) return buildException(tid, unit, fc, 3);
-
-    const values = [];
-    for (let i = 0; i < qty; i++) {
-      const v = frame.readUInt16BE(13 + i * 2);
-      values.push(v);
-      setReg(addr + i, v);
-    }
-    handleWriteSignal(addr, values);
-    pushLog('modbus_fc16', { remote, addr, qty, values, forcedOff: state.ctrl.forcedOff });
-
-    const ack = Buffer.alloc(12);
-    ack.writeUInt16BE(tid, 0);
-    ack.writeUInt16BE(0, 2);
-    ack.writeUInt16BE(6, 4);
-    ack.writeUInt8(unit, 6);
-    ack.writeUInt8(16, 7);
-    ack.writeUInt16BE(addr, 8);
-    ack.writeUInt16BE(qty, 10);
-    return ack;
-  }
-
-  return buildException(tid, unit, fc, 1);
-}
-
-let mbServer = null;
-function startModbusServer() {
-  const server = net.createServer((socket) => {
-    const remote = `${socket.remoteAddress}:${socket.remotePort}`;
-    let buffer = Buffer.alloc(0);
-
-    socket.on('data', (chunk) => {
-      buffer = Buffer.concat([buffer, chunk]);
-      while (buffer.length >= 7) {
-        const len = buffer.readUInt16BE(4);
-        const total = 6 + len;
-        if (buffer.length < total) break;
-
-        const frame = buffer.subarray(0, total);
-        buffer = buffer.subarray(total);
-        const resp = processModbusFrame(frame, remote);
-        if (resp) socket.write(resp);
-      }
-    });
-    socket.on('error', () => {});
-  });
-
-  server.listen(cfg.modbusListenPort, cfg.modbusListenHost, () => {
-    console.log(`Modbus server listening on ${cfg.modbusListenHost}:${cfg.modbusListenPort}`);
-  });
-  mbServer = server;
-}
+// DV functions extracted to dvhub/modules/dv/ (Plan 03-03)
 
 // Modbus-Client-Funktionen sind jetzt in transport-modbus.js / transport-mqtt.js
 
@@ -1340,7 +1109,7 @@ function buildInfluxLines(nowSec) {
   const meter = state.meter;
   const vic = state.victron;
   lines.push(`${m},source=meter grid_l1_w=${Number(meter.grid_l1_w || 0)},grid_l2_w=${Number(meter.grid_l2_w || 0)},grid_l3_w=${Number(meter.grid_l3_w || 0)},grid_total_w=${Number(meter.grid_total_w || 0)} ${nowSec}`);
-  lines.push(`${m},source=ctrl dv_control=${Number(controlValue())},forced_off=${state.ctrl.forcedOff ? 1 : 0} ${nowSec}`);
+  // DV control metrics are now emitted by the DV module when enabled
   const f = [];
   for (const [k, v] of Object.entries(vic)) {
     if (k === 'errors' || k === 'updatedAt') continue;
@@ -1416,10 +1185,7 @@ async function pollMeter() {
       };
     }
 
-    setReg(0, u16(total));
-    setReg(1, total < 0 ? 0xffff : 0x0000);
-    setReg(3, 0);
-    setReg(4, 0);
+    // DV register updates (setReg) now handled by DV module via telemetry stream subscription
 
     updateEnergyIntegrals(state.meter.updatedAt, total);
   } catch (e) {
@@ -1897,10 +1663,8 @@ async function evaluateSchedule() {
       const prev = state.ctrl.negativePriceActive;
       if (!prev) pushLog('negative_price_protection_on', { price: priceNow.ct_kwh, limit });
       state.ctrl.negativePriceActive = true;
-      // Victron DC/AC Abregelung immer bei negativen Preisen
-      if (cfg.dvControl?.enabled && !state.ctrl.forcedOff) {
-        applyDvVictronControl(false);
-      }
+      // Victron DC/AC curtailment during negative prices is now handled
+      // by DV module via control intents (Phase 6 arbitration will consume these)
       if (eff.value < limit) {
         await applyControlTarget(target, limit, 'negative_price_protection');
         continue;
@@ -1925,18 +1689,17 @@ async function evaluateSchedule() {
   if (state.ctrl.negativePriceActive && !priceNegative) {
     state.ctrl.negativePriceActive = false;
     pushLog('negative_price_protection_off', { price: priceNow?.ct_kwh });
-    if (cfg.dvControl?.enabled && !state.ctrl.forcedOff) {
-      applyDvVictronControl(true);
-    }
+    // DV curtailment release during price recovery is now handled by DV module
   }
 
   publishRuntimeSnapshot();
 }
 
 function keepaliveModbusPayload() {
+  // Modbus keepalive tracking has moved to DV module (modbus-slave.js)
   return {
-    ok: !!state.keepalive.modbusLastQuery,
-    lastQuery: state.keepalive.modbusLastQuery,
+    ok: false,
+    lastQuery: null,
     now: Date.now()
   };
 }
@@ -1972,8 +1735,9 @@ function costSummary() {
 function integrationState() {
   return {
     timestamp: Date.now(),
-    dvControlValue: controlValue(),
-    forcedOff: state.ctrl.forcedOff,
+    // DV control value provided by DV module when enabled
+    dvControlValue: 1,
+    forcedOff: false,
     gridTotalW: state.meter.grid_total_w,
     gridDirection: gridDirection(state.meter.grid_total_w).mode,
     gridSetpointW: state.victron.gridSetpointW,
@@ -2635,9 +2399,8 @@ function buildGatewayRouteApi() {
       };
     },
 
-    getControlValue() {
-      return String(controlValue());
-    },
+    // getControlValue and postControlLease have been moved to DV module routes
+    // (dvhub/modules/dv/routes/dv-routes.js)
 
     getControlTarget() {
       return {
@@ -2645,29 +2408,6 @@ function buildGatewayRouteApi() {
         active: state.schedule.active,
         lastWrite: state.schedule.lastWrite,
         manualOverride: state.schedule.manualOverride
-      };
-    },
-
-    async postControlLease(body = {}) {
-      if (body?.forcedOff === true) {
-        setForcedOff('api_control_lease');
-        const leaseMs = Number(body.leaseMs);
-        if (Number.isFinite(leaseMs) && leaseMs > 0) {
-          state.ctrl.offUntil = Date.now() + leaseMs;
-        }
-      } else if (body?.forcedOff === false) {
-        clearForcedOff('api_control_lease_clear');
-      } else {
-        return { status: 400, body: { ok: false, error: 'forcedOff boolean required' } };
-      }
-
-      return {
-        status: 200,
-        body: {
-          ok: true,
-          ctrl: state.ctrl,
-          controlValue: controlValue()
-        }
       };
     },
 
@@ -2910,13 +2650,7 @@ async function initializeGatewayRuntime(ctx) {
   });
 
   modbusProxy = createModbusProxy({ config: cfg, eventBus: ctx.eventBus, log: ctx.fastify.log });
-  modbusProxy.setFrameHandler((frame, socket) => {
-    const remote = `${socket?.remoteAddress || 'unknown'}:${socket?.remotePort || 0}`;
-    const response = processModbusFrame(frame, remote);
-    if (response && socket?.writable) {
-      socket.write(response);
-    }
-  });
+  // Frame handler is set by the DV module during its init (modbusProxy.setFrameHandler)
   await modbusProxy.start();
 
   telemetryStore = createTelemetryStoreIfEnabled();
@@ -2999,7 +2733,7 @@ async function initializeGatewayRuntime(ctx) {
     appVersion: APP_VERSION,
     hal,
     eventBus: ctx.eventBus,
-    controlValue,
+    // controlValue has been moved to DV module (curtailment.js)
     assertValidRuntimeCommand,
     applyControlTarget,
     validateScheduleRule,

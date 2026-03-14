@@ -6,7 +6,6 @@ export function registerControlRoutes(fastify, deps) {
   const {
     getState,
     state,
-    controlValue,
     assertValidRuntimeCommand,
     applyControlTarget
   } = deps;
@@ -23,8 +22,5 @@ export function registerControlRoutes(fastify, deps) {
     return reply.code(result.ok ? 200 : 500).send(result);
   });
 
-  fastify.get('/dv/control-value', async (request, reply) => {
-    reply.type('text/plain; charset=utf-8');
-    return String(controlValue());
-  });
+  // /dv/control-value route has been moved to DV module (dvhub/modules/dv/routes/dv-routes.js)
 }
