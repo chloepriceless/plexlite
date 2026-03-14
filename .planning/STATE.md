@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: in-progress
-stopped_at: Completed 05-02-PLAN.md
-last_updated: "2026-03-14T14:07:35Z"
+status: executing
+stopped_at: Completed 05-01-PLAN.md
+last_updated: "2026-03-14T14:09:50.735Z"
 last_activity: 2026-03-14 -- Completed 05-02 Forecast Broker and MISPEL Tracker
 progress:
   total_phases: 8
   completed_phases: 4
-  total_plans: 14
-  completed_plans: 15
+  total_plans: 17
+  completed_plans: 16
   percent: 100
 ---
 
@@ -64,6 +64,7 @@ Progress: [██████████] 100%
 | Phase 04 P02 | 3min | 2 tasks | 4 files |
 | Phase 04 P03 | 6min | 2 tasks | 5 files |
 | Phase 05 P02 | 2min | 2 tasks | 4 files |
+| Phase 05 P01 | 3min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -120,6 +121,10 @@ Recent decisions affecting current work:
 - [Phase 05]: Forecast broker only updates when plan.meta carries non-empty arrays (no-overwrite for missing data)
 - [Phase 05]: MISPEL tracker disabled by default per BNetzA rules not yet finalized
 - [Phase 05]: Annual cap uses configurable capKwhPerKwp defaulting to 500 for future regulation changes
+- [Phase 05]: EVCC bridge uses dual-format handling (data.loadpoints || data.result?.loadpoints) for v0.207+ and legacy compatibility
+- [Phase 05]: Tariff engine uses startDate/endDate field names matching config.example.json convention
+- [Phase 05]: Module 3 window matching uses Intl.DateTimeFormat for timezone-safe Europe/Berlin resolution
+- [Phase 05]: Period endDate is inclusive (end of day) for user-friendly date range semantics
 
 ### Pending Todos
 
@@ -134,6 +139,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-14T14:07:35Z
-Stopped at: Completed 05-02-PLAN.md
+Last session: 2026-03-14T14:09:50.729Z
+Stopped at: Completed 05-01-PLAN.md
 Resume file: None
