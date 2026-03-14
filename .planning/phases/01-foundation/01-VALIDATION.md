@@ -19,15 +19,15 @@ created: 2026-03-14
 |----------|-------|
 | **Framework** | Node.js built-in test runner (node:test) |
 | **Config file** | none — Wave 0 installs |
-| **Quick run command** | `node --test tests/unit/` |
-| **Full suite command** | `node --test tests/` |
+| **Quick run command** | `node --test test/` |
+| **Full suite command** | `node --test test/` |
 | **Estimated runtime** | ~10 seconds |
 
 ---
 
 ## Sampling Rate
 
-- **After every task commit:** Run `node --test tests/unit/`
+- **After every task commit:** Run `node --test test/`
 - **After every plan wave:** Run `node --test tests/`
 - **Before `/gsd:verify-work`:** Full suite must be green
 - **Max feedback latency:** 10 seconds
@@ -38,14 +38,14 @@ created: 2026-03-14
 
 | Task ID | Plan | Wave | Requirement | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|-----------|-------------------|-------------|--------|
-| 1-01-01 | 01 | 1 | ARCH-01 | unit | `node --test tests/unit/module-registry.test.js` | ❌ W0 | ⬜ pending |
-| 1-01-02 | 01 | 1 | ARCH-02 | unit | `node --test tests/unit/module-activation.test.js` | ❌ W0 | ⬜ pending |
-| 1-02-01 | 02 | 1 | GW-01 | integration | `node --test tests/integration/fastify-server.test.js` | ❌ W0 | ⬜ pending |
-| 1-02-02 | 02 | 1 | GW-05 | unit | `node --test tests/unit/event-bus.test.js` | ❌ W0 | ⬜ pending |
-| 1-03-01 | 03 | 2 | GW-02 | unit | `node --test tests/unit/device-hal.test.js` | ❌ W0 | ⬜ pending |
-| 1-03-02 | 03 | 2 | SEC-01 | integration | `node --test tests/integration/modbus-security.test.js` | ❌ W0 | ⬜ pending |
-| 1-04-01 | 04 | 2 | SEC-04 | unit | `node --test tests/unit/auth-roles.test.js` | ❌ W0 | ⬜ pending |
-| 1-04-02 | 04 | 2 | SEC-05 | integration | `node --test tests/integration/ws-auth.test.js` | ❌ W0 | ⬜ pending |
+| 1-01-01 | 01 | 1 | ARCH-01 | unit | `node --test test/module-registry.test.js` | ❌ W0 | ⬜ pending |
+| 1-01-02 | 01 | 1 | ARCH-02 | unit | `node --test test/module-activation.test.js` | ❌ W0 | ⬜ pending |
+| 1-02-01 | 02 | 1 | GW-01 | integration | `node --test test/fastify-server.test.js` | ❌ W0 | ⬜ pending |
+| 1-02-02 | 02 | 1 | GW-05 | unit | `node --test test/event-bus.test.js` | ❌ W0 | ⬜ pending |
+| 1-03-01 | 03 | 2 | GW-02 | unit | `node --test test/device-hal.test.js` | ❌ W0 | ⬜ pending |
+| 1-03-02 | 03 | 2 | SEC-01 | integration | `node --test test/modbus-security.test.js` | ❌ W0 | ⬜ pending |
+| 1-04-01 | 04 | 2 | SEC-04 | unit | `node --test test/auth-roles.test.js` | ❌ W0 | ⬜ pending |
+| 1-04-02 | 04 | 2 | SEC-05 | integration | `node --test test/ws-auth.test.js` | ❌ W0 | ⬜ pending |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
@@ -53,14 +53,14 @@ created: 2026-03-14
 
 ## Wave 0 Requirements
 
-- [ ] `tests/unit/module-registry.test.js` — stubs for ARCH-01, ARCH-02
-- [ ] `tests/unit/event-bus.test.js` — stubs for GW-05
-- [ ] `tests/unit/device-hal.test.js` — stubs for GW-02, GW-03
-- [ ] `tests/unit/auth-roles.test.js` — stubs for SEC-04, SEC-05
-- [ ] `tests/integration/fastify-server.test.js` — stubs for GW-01, ARCH-05
-- [ ] `tests/integration/modbus-security.test.js` — stubs for SEC-01
-- [ ] `tests/integration/ws-auth.test.js` — stubs for SEC-05
-- [ ] `tests/helpers/fixtures.js` — shared test fixtures
+- [ ] `test/module-registry.test.js` — stubs for ARCH-01, ARCH-02
+- [ ] `test/event-bus.test.js` — stubs for GW-05
+- [ ] `test/device-hal.test.js` — stubs for GW-02, GW-03
+- [ ] `test/auth-roles.test.js` — stubs for SEC-04, SEC-05
+- [ ] `test/fastify-server.test.js` — stubs for GW-01, ARCH-05
+- [ ] `test/modbus-security.test.js` — stubs for SEC-01
+- [ ] `test/ws-auth.test.js` — stubs for SEC-05
+- [ ] `test/fixtures.js` — shared test fixtures
 
 ---
 
