@@ -19,7 +19,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 5: External Integrations** - EVCC bridge, forecast broker, tariff models, and MISPEL preparation (completed 2026-03-14)
 - [x] **Phase 6: Arbitration + Execution** - Intent-based control pipeline with priority resolution, command logging, and audit trail (completed 2026-03-14)
 - [x] **Phase 7: Deployment** - Docker Compose orchestration, hybrid mode, compose-manager, and native install updates (completed 2026-03-14)
-- [ ] **Phase 8: UI Modernization** - Preact+HTM migration, animated power flow, setup wizard, and mobile-responsive dashboard
+- [x] **Phase 8: UI Modernization** - Preact+HTM migration, animated power flow, setup wizard, and mobile-responsive dashboard (completed 2026-03-14)
 
 ## Phase Details
 
@@ -176,4 +176,4 @@ Phases execute in numeric order. Phases 3 and 4 share Phase 2 as dependency and 
 | 5. External Integrations | 3/3 | Complete   | 2026-03-14 |
 | 6. Arbitration + Execution | 2/2 | Complete   | 2026-03-14 |
 | 7. Deployment | 2/2 | Complete   | 2026-03-14 |
-| 8. UI Modernization | 0/3 | Not started | - |
+| 8. UI Modernization | 3/3 | Complete   | 2026-03-14 |
