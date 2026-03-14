@@ -25,19 +25,19 @@ export function useWebSocket(url) {
           const data = JSON.parse(e.data);
           switch (data.type) {
             case 'telemetry':
-              telemetry.value = data.payload;
+              telemetry.value = data.data;
               break;
             case 'config':
-              config.value = data.payload;
+              config.value = data.data;
               break;
             case 'prices':
-              prices.value = data.payload;
+              prices.value = data.data;
               break;
             case 'dv':
-              dvStatus.value = data.payload;
+              dvStatus.value = data.data;
               break;
             case 'exec':
-              execStatus.value = data.payload;
+              execStatus.value = data.data;
               break;
           }
         } catch {

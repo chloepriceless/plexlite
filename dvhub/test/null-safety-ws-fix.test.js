@@ -1,6 +1,11 @@
 import { describe, it, mock } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { resolve, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { createExecutor } from '../core/executor.js';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -122,5 +127,28 @@ describe('executor null hal safety', () => {
       assert.equal(err.constructor.name, 'Error', 'must be plain Error, not TypeError');
       assert.ok(!(err instanceof TypeError), 'must not be TypeError');
     }
+  });
+});
+
+// ── WebSocket field name alignment tests ─────────────────────────────────────
+
+describe('WebSocket field name alignment', () => {
+  const wsHookPath = resolve(__dirname, '../public/components/shared/use-websocket.js');
+  const gatewayPluginPath = resolve(__dirname, '../modules/gateway/plugin.js');
+
+  it('use-websocket.js source contains "data.data" (not "data.payload")', () => {
+    const src = readFileSync(wsHookPath, 'utf8');
+    assert.ok(src.includes('data.data'), 'use-websocket.js must reference data.data');
+  });
+
+  it('use-websocket.js source has zero occurrences of "data.payload"', () => {
+    const src = readFileSync(wsHookPath, 'utf8');
+    const count = (src.match(/data\.payload/g) || []).length;
+    assert.equal(count, 0, `expected 0 occurrences of data.payload, found ${count}`);
+  });
+
+  it('gateway plugin.js broadcasts with "data" field', () => {
+    const src = readFileSync(gatewayPluginPath, 'utf8');
+    assert.ok(src.match(/broadcast\(\{[^}]*data/), 'gateway plugin must broadcast with data field');
   });
 });
