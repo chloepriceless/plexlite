@@ -155,12 +155,12 @@ Plans:
   3. Setup wizard allows module activation/deactivation (DV, Optimizer) and all configuration parameters are accessible through the settings UI
   4. Autarky rate (Autarkiegrad) and self-consumption rate (Eigenverbrauchsquote) display as prominent dashboard metrics
   5. All dashboard pages are mobile-responsive and usable on phone screens without horizontal scrolling
-**Plans**: 2 plans
+**Plans**: 3 plans
 
 Plans:
-- [ ] 08-01: TBD
-- [ ] 08-02: TBD
-- [ ] 08-03: TBD
+- [ ] 08-01-PLAN.md -- Foundation: Preact+HTM vendoring, SPA shell with hash router, WebSocket hook, signal store, responsive CSS
+- [ ] 08-02-PLAN.md -- Dashboard views: power flow, price chart, energy timeline, KPI cards, forecast, panels
+- [ ] 08-03-PLAN.md -- Settings, setup wizard with module toggles, history page, tools page
 
 ## Progress
 
