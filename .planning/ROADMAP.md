@@ -107,12 +107,12 @@ Plans:
   3. Grid import optimization supports dynamic tariffs (EPEX), multi-window tariffs (Octopus-style), fixed prices, and Paragraph 14a Module 3 time-variable network charges
   4. MISPEL/Pauschaloption data model tracks energy provenance (PV vs grid) and annual cap (500 kWh/kWp) -- ready for activation when BNetzA rules finalize
   5. History data aggregates telemetry from all connected endpoints (inverter, DV, optimizer, EVCC) into a unified queryable store
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 05-01: TBD
-- [ ] 05-02: TBD
-- [ ] 05-03: TBD
+- [ ] 05-01-PLAN.md -- EVCC bridge service and tariff engine with EPEX/fixed/Module 3 support
+- [ ] 05-02-PLAN.md -- Forecast broker and MISPEL provenance tracker
+- [ ] 05-03-PLAN.md -- Module lifecycle wiring, API routes, and history aggregation
 
 ### Phase 6: Arbitration + Execution
 **Goal**: All hardware control flows through an intent-based arbitration layer with fixed priority resolution, and an execution layer that logs every command with readback verification
