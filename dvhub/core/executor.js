@@ -56,18 +56,25 @@ export function createExecutor({ hal, db, eventBus, log, config: userConfig } = 
     const ts = new Date();
 
     // 1. Log command:sent before HAL write
-    await db.insertControlEvent({
-      ts,
-      type: 'command:sent',
-      source,
-      severity: 'info',
-      message: `${source} -> ${target} = ${value}`,
-      details: { priority, target, value, reason }
-    });
+    if (!db) {
+      log?.warn({ source, target, value }, 'No database adapter — skipping command log');
+    } else {
+      await db.insertControlEvent({
+        ts,
+        type: 'command:sent',
+        source,
+        severity: 'info',
+        message: `${source} -> ${target} = ${value}`,
+        details: { priority, target, value, reason }
+      });
+    }
 
     log?.info({ source, target, value, priority }, `command:sent ${source} -> ${target} = ${value}`);
 
     // 2. Execute HAL write
+    if (!hal) {
+      throw new Error(`HAL unavailable — cannot write ${target}=${value} (source: ${source})`);
+    }
     await hal.writeControl(target, value);
 
     // 3. Readback verification
@@ -85,14 +92,16 @@ export function createExecutor({ hal, db, eventBus, log, config: userConfig } = 
 
       if (threshold != null && deviation > threshold) {
         // Deviation exceeds threshold
-        await db.insertControlEvent({
-          ts: new Date(),
-          type: 'command:deviation',
-          source,
-          severity: 'warn',
-          message: `${target} deviation: commanded=${value} readback=${readback} delta=${deviation}`,
-          details: { target, commanded: value, readback, deviation, threshold }
-        });
+        if (!db) { /* warn already logged at entry */ } else {
+          await db.insertControlEvent({
+            ts: new Date(),
+            type: 'command:deviation',
+            source,
+            severity: 'warn',
+            message: `${target} deviation: commanded=${value} readback=${readback} delta=${deviation}`,
+            details: { target, commanded: value, readback, deviation, threshold }
+          });
+        }
 
         eventBus.emit({
           type: 'exec:deviation',
@@ -114,14 +123,16 @@ export function createExecutor({ hal, db, eventBus, log, config: userConfig } = 
       }
 
       // Within threshold -- verified
-      await db.insertControlEvent({
-        ts: new Date(),
-        type: 'command:verified',
-        source,
-        severity: 'info',
-        message: `${target} verified: commanded=${value} readback=${readback} delta=${deviation}`,
-        details: { target, commanded: value, readback, deviation }
-      });
+      if (!db) { /* warn already logged at entry */ } else {
+        await db.insertControlEvent({
+          ts: new Date(),
+          type: 'command:verified',
+          source,
+          severity: 'info',
+          message: `${target} verified: commanded=${value} readback=${readback} delta=${deviation}`,
+          details: { target, commanded: value, readback, deviation }
+        });
+      }
 
       log?.info({ target, readback, deviation }, `command:verified ${target}`);
 
@@ -131,14 +142,16 @@ export function createExecutor({ hal, db, eventBus, log, config: userConfig } = 
     }
 
     // Readback unavailable for this target
-    await db.insertControlEvent({
-      ts: new Date(),
-      type: 'command:executed',
-      source,
-      severity: 'info',
-      message: `readback:unavailable for ${target}`,
-      details: { target, value }
-    });
+    if (!db) { /* warn already logged at entry */ } else {
+      await db.insertControlEvent({
+        ts: new Date(),
+        type: 'command:executed',
+        source,
+        severity: 'info',
+        message: `readback:unavailable for ${target}`,
+        details: { target, value }
+      });
+    }
 
     log?.info({ target, value }, `readback:unavailable for ${target}`);
 
