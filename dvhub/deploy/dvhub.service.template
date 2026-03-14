@@ -1,0 +1,30 @@
+[Unit]
+Description=DVhub Energy Management
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=__SERVICE_USER__
+Group=__SERVICE_USER__
+WorkingDirectory=__APP_DIR__
+ExecStart=/usr/bin/node --experimental-sqlite server.js
+Environment=NODE_ENV=production
+Environment=DV_APP_CONFIG=__CONFIG_PATH__
+Environment=DV_DATA_DIR=__DATA_DIR__
+Environment=DV_ENABLE_SERVICE_ACTIONS=1
+EnvironmentFile=-/etc/dvhub/dvhub.env
+
+Restart=on-failure
+RestartSec=5
+StartLimitIntervalSec=300
+StartLimitBurst=5
+
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+NoNewPrivileges=yes
+ReadWritePaths=__DATA_DIR__ __CONFIG_DIR__
+
+[Install]
+WantedBy=multi-user.target

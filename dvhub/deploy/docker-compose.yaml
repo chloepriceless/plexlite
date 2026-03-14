@@ -1,0 +1,117 @@
+# DVhub Docker Compose - Three Deployment Modes
+#
+# Native-only:  systemctl start dvhub           (no Docker needed)
+# Hybrid:       docker compose --profile hybrid up -d  +  systemctl start dvhub
+# Full-Docker:  docker compose --profile full up -d
+#
+# Services with "hybrid" profile: optimizer containers (EOS, EMHASS, EVCC)
+# Services with "full" profile only: DVhub itself (runs in container)
+
+services:
+  eos:
+    image: akkudoktor/eos:0.2.0
+    profiles: ["hybrid", "full"]
+    ports:
+      - "8503:8503"
+      - "8504:8504"
+    environment:
+      OPENBLAS_NUM_THREADS: "1"
+      OMP_NUM_THREADS: "1"
+      MKL_NUM_THREADS: "1"
+      EOS_SERVER__HOST: "0.0.0.0"
+      EOS_SERVER__PORT: "8503"
+      EOS_SERVER__EOSDASH_HOST: "0.0.0.0"
+      EOS_SERVER__EOSDASH_PORT: "8504"
+    volumes:
+      - eos-data:/data
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+        reservations:
+          cpus: "0.25"
+          memory: 256M
+    # CRITICAL: EOS requires seccomp:unconfined and high ulimits for OpenBLAS threading
+    security_opt:
+      - seccomp:unconfined
+    ulimits:
+      nproc: 65535
+      nofile:
+        soft: 65535
+        hard: 65535
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8503/v1/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+
+  emhass:
+    image: ghcr.io/davidusb-geek/emhass:v0.17.0
+    profiles: ["hybrid", "full"]
+    ports:
+      - "5000:5000"
+    volumes:
+      - emhass-data:/share
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+        reservations:
+          cpus: "0.25"
+          memory: 256M
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+
+  evcc:
+    image: evcc/evcc:0.300.3
+    profiles: ["hybrid", "full"]
+    ports:
+      - "7070:7070"
+      - "8887:8887"
+    volumes:
+      - evcc-data:/root/.evcc
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:7070/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+
+  dvhub:
+    build:
+      context: ..
+      dockerfile: dvhub/deploy/Dockerfile
+    profiles: ["full"]
+    ports:
+      - "8080:3000"
+    environment:
+      NODE_ENV: production
+      DV_APP_CONFIG: /etc/dvhub/config.json
+      DV_DATA_DIR: /var/lib/dvhub
+    volumes:
+      - ./config:/etc/dvhub
+      - dvhub-data:/var/lib/dvhub
+    depends_on:
+      eos:
+        condition: service_healthy
+      emhass:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  eos-data:
+  emhass-data:
+  evcc-data:
+  dvhub-data:
