@@ -73,11 +73,12 @@ Plans:
   3. Curtailment signals (0%/100% and intermediate values) from the DV provider are detected, processed, and forwarded as control intents within one poll cycle
   4. Disabling the DV module in config removes all DV functionality with zero runtime footprint -- no DV routes, no DV event listeners, no DV state
   5. The DV module emits structured intents to the event bus (for later arbitration) instead of calling hardware write functions directly
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 03-01: TBD
-- [ ] 03-02: TBD
+- [ ] 03-01-PLAN.md -- DV core infrastructure: state factory, LUOX provider adapter, Modbus slave frame processing
+- [ ] 03-02-PLAN.md -- Curtailment manager with lease expiry, control intent emission, DV HTTP routes
+- [ ] 03-03-PLAN.md -- Module lifecycle wiring (init/destroy), gateway DV code cleanup, integration tests
 
 ### Phase 4: Optimizer Core
 **Goal**: DVhub can orchestrate multiple external optimizers (EOS, EMHASS) through a pluggable adapter pattern, receive optimization plans, normalize them to a canonical format, score them, and select the best plan
@@ -170,7 +171,7 @@ Phases execute in numeric order. Phases 3 and 4 share Phase 2 as dependency and 
 |-------|----------------|--------|-----------|
 | 1. Foundation | 3/4 | In Progress|  |
 | 2. Data Architecture | 4/4 | Complete   | 2026-03-14 |
-| 3. DV Module | 0/2 | Not started | - |
+| 3. DV Module | 0/3 | Not started | - |
 | 4. Optimizer Core | 0/3 | Not started | - |
 | 5. External Integrations | 0/3 | Not started | - |
 | 6. Arbitration + Execution | 0/2 | Not started | - |
