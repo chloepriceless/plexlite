@@ -10,6 +10,9 @@ export function createTelemetryStreams(eventBus) {
     epex$: eventBus.createStream('gateway:epex$', null)
   };
 
+  // Aggregate telemetry stream for downstream modules (DV, Optimizer)
+  const telemetry$ = eventBus.createStream('telemetry', null);
+
   function update(snapshot = {}) {
     if (snapshot.meter !== undefined) streams.meter$.next(snapshot.meter);
     if (snapshot.victron !== undefined) streams.victron$.next(snapshot.victron);
@@ -26,6 +29,28 @@ export function createTelemetryStreams(eventBus) {
     if (snapshot.meter) {
       streams.gridPower$.next(snapshot.meter.grid_total_w ?? null);
     }
+
+    // Update aggregate telemetry stream for DV + Optimizer consumers
+    telemetry$.next({
+      meter: streams.meter$.getValue(),
+      soc: streams.soc$.getValue(),
+      gridPower: streams.gridPower$.getValue(),
+      pvPower: streams.pvPower$.getValue(),
+      pvTotalW: snapshot.victron?.pvTotalW ?? snapshot.victron?.pvPowerW ?? null,
+      batteryPower: streams.batteryPower$.getValue(),
+      victron: streams.victron$.getValue(),
+      schedule: streams.schedule$.getValue(),
+      epex: streams.epex$.getValue(),
+      // Fields optimizer expects (from triggerOptimization snapshot)
+      loadPowerW: null,
+      batteryPowerW: snapshot.victron?.batteryPowerW ?? null,
+      gridImportW: snapshot.victron?.gridImportW ?? null,
+      gridExportW: snapshot.victron?.gridExportW ?? null,
+      gridTotalW: snapshot.meter?.grid_total_w ?? null,
+      gridSetpointW: snapshot.victron?.gridSetpointW ?? null,
+      minSocPct: snapshot.victron?.minSocPct ?? null,
+      selfConsumptionW: snapshot.victron?.selfConsumptionW ?? null,
+    });
   }
 
   function getSnapshot() {

@@ -114,7 +114,7 @@ export function createOptimizerModule(config) {
         // OPT-10: Publish EVCC state to event bus for unified telemetry
         evccSubscription = evccBridge.getState$().subscribe(state => {
           if (state && ctx.eventBus) {
-            ctx.eventBus.publish('evcc.state', state);
+            ctx.eventBus.emit({ type: 'evcc.state', data: state });
           }
           // History persistence: write EVCC loadpoint telemetry to DB
           if (state && ctx.db) {

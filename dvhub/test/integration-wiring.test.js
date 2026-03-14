@@ -55,3 +55,60 @@ describe('INT-04: Database adapter instantiated in server.js', () => {
     assert.match(src, /db\?*\)?\s*await\s+db\.close\(\)|if\s*\(db\)\s*await\s+db\.close\(\)/);
   });
 });
+
+// ─── Task 2: INT-02 + INT-07 — Telemetry aggregate + publish->emit ───
+
+describe('INT-02: Aggregate telemetry stream in gateway telemetry.js', () => {
+  it('creates aggregate telemetry stream via createTelemetryStreams', async () => {
+    const { createTelemetryStreams } = await import('../modules/gateway/telemetry.js');
+    // Mock event bus with createStream, getStream, getValue
+    const streams = new Map();
+    const mockEventBus = {
+      createStream(name, initial) {
+        const subject = { _value: initial, next(v) { this._value = v; }, getValue() { return this._value; }, subscribe() { return { unsubscribe() {} }; } };
+        streams.set(name, subject);
+        return subject;
+      },
+      getStream(name) { return streams.get(name) || null; },
+      getValue(name) { return streams.get(name)?._value ?? null; },
+    };
+
+    const telemetry = createTelemetryStreams(mockEventBus);
+    assert.ok(streams.has('telemetry'), 'telemetry stream must be created');
+  });
+
+  it('update() populates aggregate telemetry with meter and soc fields', async () => {
+    const { createTelemetryStreams } = await import('../modules/gateway/telemetry.js');
+    const streams = new Map();
+    const mockEventBus = {
+      createStream(name, initial) {
+        const subject = { _value: initial, next(v) { this._value = v; }, getValue() { return this._value; }, subscribe() { return { unsubscribe() {} }; } };
+        streams.set(name, subject);
+        return subject;
+      },
+      getStream(name) { return streams.get(name) || null; },
+      getValue(name) { return streams.get(name)?._value ?? null; },
+    };
+
+    const telemetry = createTelemetryStreams(mockEventBus);
+    telemetry.update({ meter: { grid_total_w: 1500 }, victron: { soc: 75, pvTotalW: 3000, batteryPowerW: -200 } });
+
+    const aggregate = streams.get('telemetry')._value;
+    assert.ok(aggregate, 'aggregate telemetry should not be null after update');
+    assert.deepStrictEqual(aggregate.meter, { grid_total_w: 1500 });
+    assert.strictEqual(aggregate.soc, 75);
+    assert.strictEqual(aggregate.pvTotalW, 3000);
+  });
+});
+
+describe('INT-07: publish() replaced with emit() in optimizer', () => {
+  const src = readSource('modules/optimizer/index.js');
+
+  it('does NOT contain ctx.eventBus.publish(', () => {
+    assert.doesNotMatch(src, /ctx\.eventBus\.publish\(/);
+  });
+
+  it('contains ctx.eventBus.emit({ with type evcc.state', () => {
+    assert.match(src, /ctx\.eventBus\.emit\(\{.*type:\s*'evcc\.state'/s);
+  });
+});
