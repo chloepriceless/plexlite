@@ -90,12 +90,12 @@ Plans:
   3. Plan engine stores received plans, scores them using a configurable metric, and selects a winner -- the winning plan is visible on the dashboard
   4. Optimizer containers are version-pinned (never :latest) and adapter startup logs a warning if the detected optimizer version is untested
   5. No optimizer communication blocks the event loop -- all outbound HTTP calls use fire-and-forget with 5-second timeouts, and the poll loop continues uninterrupted during optimization runs
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 04-01: TBD
-- [ ] 04-02: TBD
-- [ ] 04-03: TBD
+- [ ] 04-01-PLAN.md -- Adapter registry, EOS/EMHASS adapters, JSON validation schemas, and adapter tests
+- [ ] 04-02-PLAN.md -- Plan scorer with feasibility check and plan engine with active plan stream
+- [ ] 04-03-PLAN.md -- Optimizer module lifecycle wiring, Fastify plugin, API routes, integration tests
 
 ### Phase 5: External Integrations
 **Goal**: DVhub integrates with EVCC for EV charging coordination, ingests forecasts from multiple sources, supports advanced German tariff models, and prepares for MISPEL regulation
