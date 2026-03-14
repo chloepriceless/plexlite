@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: completed
-stopped_at: Completed 07-02-PLAN.md
+status: in-progress
+stopped_at: Completed 08-01-PLAN.md
 last_updated: "2026-03-14T15:51:56.931Z"
-last_activity: 2026-03-14 -- Completed 07-02 Installer Enhancement and Optimizer Scheduling
+last_activity: 2026-03-14 -- Completed 08-01 SPA Foundation
 progress:
   total_phases: 8
   completed_phases: 7
-  total_plans: 21
-  completed_plans: 21
-  percent: 100
+  total_plans: 24
+  completed_plans: 22
+  percent: 92
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-14)
 
 **Core value:** Reliable real-time DV interface (measurement delivery, curtailment compliance) AND intelligent price optimization -- all from one box
-**Current focus:** Phase 7: Deployment
+**Current focus:** Phase 8: UI Modernization
 
 ## Current Position
 
-Phase: 7 of 8 (Deployment) -- COMPLETE
-Plan: 2 of 2 in current phase -- COMPLETE
-Status: Phase 7 complete, ready for Phase 8
-Last activity: 2026-03-14 -- Completed 07-02 Installer Enhancement and Optimizer Scheduling
+Phase: 8 of 8 (UI Modernization)
+Plan: 1 of 3 in current phase -- COMPLETE
+Status: Plan 08-01 complete, ready for Plan 08-02
+Last activity: 2026-03-14 -- Completed 08-01 SPA Foundation
 
-Progress: [██████████] 100%
+Progress: [███████████░░░░░░░░░] 73%
 
 ## Performance Metrics
 
@@ -70,6 +70,7 @@ Progress: [██████████] 100%
 | Phase 06 P02 | 3min | 2 tasks | 5 files |
 | Phase 07 P01 | 2min | 2 tasks | 6 files |
 | Phase 07 P02 | 5min | 2 tasks | 7 files |
+| Phase 08 P01 | 8min | 2 tasks | 20 files |
 
 ## Accumulated Context
 
@@ -147,6 +148,9 @@ Recent decisions affecting current work:
 - [Phase 07]: Staggered scheduler uses setTimeout+setInterval with unref() for non-blocking timers
 - [Phase 07]: Compose lifecycle swallows errors to be non-fatal when Docker is unavailable
 - [Phase 07]: Install.sh uses sed template substitution instead of inline heredoc for systemd service
+- [Phase 08]: Pure KPI computations extracted to compute.js for Node.js testability without Preact import map
+- [Phase 08]: Used standalone.js from preact-htm-signals-standalone (var-declaration ESM with export)
+- [Phase 08]: SPA responsive breakpoints added alongside existing device-specific breakpoints
 
 ### Pending Todos
 
@@ -161,6 +165,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-14T15:47:21Z
-Stopped at: Completed 07-02-PLAN.md
+Last session: 2026-03-14T16:40:23Z
+Stopped at: Completed 08-01-PLAN.md
 Resume file: None
