@@ -201,7 +201,7 @@ Plans:
 ### v1.1 Phases (Functional Parity)
 
 - [x] **Phase 11: Backend Integration** - API response completeness and WebSocket telemetry field parity with old system (completed 2026-03-15)
-- [ ] **Phase 12: Dashboard Data & Controls** - Dashboard metrics, KPI cards, control panel write functions, and schedule management
+- [x] **Phase 12: Dashboard Data & Controls** - Dashboard metrics, KPI cards, control panel write functions, and schedule management (completed 2026-03-15)
 - [ ] **Phase 13: Chart Interactivity** - Price chart slot selection, tooltips, overlays, and margin comparison
 - [ ] **Phase 14: Kleine Boersenautomatik** - Stage-based automation config panel with plan summary and slot visualization
 - [ ] **Phase 15: Settings Parity** - Network discovery, VRM history import, health checks, and service management
@@ -301,7 +301,7 @@ Phases execute in numeric order. Phases 3 and 4 share Phase 2 as dependency and 
 | 9. Integration Wiring | 1/1 | Complete   | 2026-03-14 |
 | 10. Null Safety & WS Field Fix | 1/1 | Complete   | 2026-03-14 |
 | 11. Backend Integration | 2/2 | Complete   | 2026-03-15 |
-| 12. Dashboard Data & Controls | 0/3 | Not started | - |
+| 12. Dashboard Data & Controls | 3/3 | Complete   | 2026-03-15 |
 | 13. Chart Interactivity | 0/0 | Not started | - |
 | 14. Kleine Boersenautomatik | 0/0 | Not started | - |
 | 15. Settings Parity | 0/0 | Not started | - |

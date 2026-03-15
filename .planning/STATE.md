@@ -1,17 +1,17 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.0
-milestone_name: milestone
+milestone: v1.1
+milestone_name: Phases
 status: completed
-stopped_at: Completed 12-01-PLAN.md
-last_updated: "2026-03-15T00:55:36Z"
-last_activity: 2026-03-15 -- Completed 12-01-PLAN.md (dashboard data display cards)
+stopped_at: Completed 12-03-PLAN.md
+last_updated: "2026-03-15T01:01:46.391Z"
+last_activity: 2026-03-15 -- Completed 12-02-PLAN.md (control panel writes)
 progress:
-  total_phases: 10
-  completed_phases: 5
-  total_plans: 14
-  completed_plans: 26
-  percent: 50
+  total_phases: 16
+  completed_phases: 7
+  total_plans: 18
+  completed_plans: 31
+  percent: 100
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-14)
 
 **Core value:** Reliable real-time DV interface (measurement delivery, curtailment compliance) AND intelligent price optimization -- all from one box
-**Current focus:** v1.1 Functional Parity -- Phase 12 (Dashboard Data & Controls), Plan 01 COMPLETE
+**Current focus:** v1.1 Functional Parity -- Phase 12 (Dashboard Data & Controls), Plan 03 COMPLETE
 
 ## Current Position
 
-Phase: 12 of 16 (Dashboard Data & Controls) -- IN PROGRESS
-Plan: 1 of 3 in current phase
-Status: Plan 12-01 complete. EPEX/cost/status KPI cards with pure compute module.
-Last activity: 2026-03-15 -- Completed 12-01-PLAN.md (dashboard data display cards)
+Phase: 12 of 16 (Dashboard Data & Controls) -- COMPLETE
+Plan: 3 of 3 in current phase
+Status: Plan 12-03 complete. Interactive schedule panel with inline editing, defaults, active values.
+Last activity: 2026-03-15 -- Completed 12-03-PLAN.md (schedule panel interactive)
 
-Progress: [██████████░░░░░░░░░░] 50%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
@@ -78,6 +78,8 @@ Progress: [██████████░░░░░░░░░░] 50%
 | Phase 11 P01 | 3min | 1 tasks | 2 files |
 | Phase 11 P02 | 1min | 2 tasks | 3 files |
 | Phase 12 P01 | 2min | 2 tasks | 6 files |
+| Phase 12 P02 | 2min | 2 tasks | 3 files |
+| Phase 12 P03 | 2min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -177,6 +179,10 @@ Recent decisions affecting current work:
 - [Phase 11]: EPEX trigger uses exact match on epex.bzn and epex.enabled paths
 - [Phase 12]: Null guard before Number() in fmtCentValue (Number(null)=0 passes isFinite)
 - [Phase 12]: formatTimestamp uses manual string formatting for consistent DD.MM. HH:MM output
+- [Phase 12]: Pending state machine extracted to pure compute module matching Phase 8 pattern
+- [Phase 12]: Slider uses oninput for preview, onchange for submit (standard range input UX)
+- [Phase 12]: Charge current input has no min/max constraints (inverter sizes vary)
+- [Phase 12]: Module-level signals for edit state (editingRowIdx, editBuffer) instead of component state
 
 ### Pending Todos
 
@@ -191,6 +197,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-15T00:55:36Z
-Stopped at: Completed 12-01-PLAN.md
+Last session: 2026-03-15T01:01:46.381Z
+Stopped at: Completed 12-03-PLAN.md
 Resume file: None
