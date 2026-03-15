@@ -16,7 +16,8 @@ docs/plans/
 .claude/
 .vscode/
 .worktrees/
-.planning/
+# .planning/ tracked for GSD workflow persistence (ROADMAP.md, STATE.md, etc.)
+.planning/codebase/
 *.swp
 *.swo
 *~
