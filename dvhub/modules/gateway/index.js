@@ -2163,7 +2163,7 @@ function buildGatewayRouteApi() {
     },
 
     getStatus() {
-      expireLeaseIfNeeded();
+      // expireLeaseIfNeeded moved to DV curtailment module
       return buildApiStatusResponse(Date.now());
     },
 
@@ -2603,7 +2603,7 @@ function startRuntimeLoops() {
   };
 
   loadEnergy();
-  trackTimer(setInterval(expireLeaseIfNeeded, 1000));
+  // expireLeaseIfNeeded moved to DV curtailment module (has its own timer)
   trackTimer(setInterval(() => liveTelemetryBuffer?.flush(), 1000));
   trackTimer(setInterval(() => publishRuntimeSnapshot(), 1000));
 
