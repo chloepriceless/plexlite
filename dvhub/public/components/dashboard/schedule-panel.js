@@ -6,6 +6,9 @@ import { telemetry } from '../shared/use-signal-store.js';
 import { formatTimestamp } from './dashboard-compute.js';
 import { groupScheduleRulesForDashboard, collectScheduleRulesFromRowState, isSmallMarketAutomationRule } from './schedule-compute.js';
 
+/* ── Cross-component refresh trigger ──────────────────────────────── */
+export const scheduleRefreshTrigger = signal(0);
+
 /* ── Local signals (module-level) ─────────────────────────────────── */
 const editingRowIdx = signal(null);
 const editBuffer = signal({});
@@ -140,6 +143,13 @@ export function SchedulePanel() {
   const { data, loading, error, refresh } = useApi('/api/schedule');
 
   useEffect(() => { refresh(); }, []);
+
+  // Watch scheduleRefreshTrigger for cross-component refresh (e.g. chart rule creation)
+  useEffect(() => {
+    if (scheduleRefreshTrigger.value > 0) {
+      refresh();
+    }
+  }, [scheduleRefreshTrigger.value]);
 
   // Initialize default values from loaded config
   useEffect(() => {

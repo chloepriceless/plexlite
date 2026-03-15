@@ -1,12 +1,14 @@
 import { html } from 'htm/preact';
-import { telemetry, prices, forecast, dvStatus, execStatus, wsConnected } from '../shared/use-signal-store.js';
+import { useEffect } from 'preact/hooks';
+import { telemetry, prices, forecast, dvStatus, execStatus, wsConnected, userEnergyPricing } from '../shared/use-signal-store.js';
 import { signal } from '@preact/signals';
+import { apiFetch } from '../shared/use-api.js';
 import { PowerFlow } from './power-flow.js';
 import { KpiCards } from './kpi-cards.js';
 import { PriceChart } from './price-chart.js';
 import { EnergyTimeline } from './energy-timeline.js';
 import { ForecastChart } from './forecast-chart.js';
-import { SchedulePanel } from './schedule-panel.js';
+import { SchedulePanel, scheduleRefreshTrigger } from './schedule-panel.js';
 import { ControlPanel } from './control-panel.js';
 import { EpexCard } from './epex-card.js';
 import { CostCard } from './cost-card.js';
@@ -17,6 +19,22 @@ import { LogPanel } from './log-panel.js';
 const energyData = signal([]);
 
 export function DashboardPage() {
+  // Fetch userEnergyPricing on mount and every 60 seconds
+  useEffect(() => {
+    async function fetchPricing() {
+      try {
+        const res = await apiFetch('/api/status');
+        if (res.ok) {
+          const data = await res.json();
+          userEnergyPricing.value = data.userEnergyPricing || null;
+        }
+      } catch (e) { /* ignore */ }
+    }
+    fetchPricing();
+    const iv = setInterval(fetchPricing, 60000);
+    return () => clearInterval(iv);
+  }, []);
+
   return html`
     <header class="panel compact-topbar reveal">
       <div class="compact-topbar-copy">
@@ -45,7 +63,7 @@ export function DashboardPage() {
       <${StatusCard} />
 
       <!-- Row 3: Price Chart (span-12) -->
-      <${PriceChart} prices=${prices} />
+      <${PriceChart} prices=${prices} userEnergyPricing=${userEnergyPricing} scheduleRefreshTrigger=${scheduleRefreshTrigger} />
 
       <!-- Row 4: Energy Timeline (span-12) -->
       <${EnergyTimeline} energyData=${energyData} prices=${prices} />
