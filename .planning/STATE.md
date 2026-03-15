@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: completed
-stopped_at: Completed 11-02-PLAN.md
-last_updated: "2026-03-15T00:12:00Z"
-last_activity: 2026-03-15 -- Completed 11-02-PLAN.md (telemetry extension + config-save triggers)
+stopped_at: Completed 12-01-PLAN.md
+last_updated: "2026-03-15T00:55:36Z"
+last_activity: 2026-03-15 -- Completed 12-01-PLAN.md (dashboard data display cards)
 progress:
   total_phases: 10
   completed_phases: 5
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-14)
 
 **Core value:** Reliable real-time DV interface (measurement delivery, curtailment compliance) AND intelligent price optimization -- all from one box
-**Current focus:** v1.1 Functional Parity -- Phase 11 (Backend Integration), COMPLETE
+**Current focus:** v1.1 Functional Parity -- Phase 12 (Dashboard Data & Controls), Plan 01 COMPLETE
 
 ## Current Position
 
-Phase: 11 of 16 (Backend Integration) -- COMPLETE
-Plan: 2 of 2 in current phase -- All plans COMPLETE
-Status: Phase 11 complete. API status parity + telemetry extension + config-save triggers.
-Last activity: 2026-03-15 -- Completed 11-02-PLAN.md (telemetry extension + config-save triggers)
+Phase: 12 of 16 (Dashboard Data & Controls) -- IN PROGRESS
+Plan: 1 of 3 in current phase
+Status: Plan 12-01 complete. EPEX/cost/status KPI cards with pure compute module.
+Last activity: 2026-03-15 -- Completed 12-01-PLAN.md (dashboard data display cards)
 
 Progress: [██████████░░░░░░░░░░] 50%
 
@@ -77,6 +77,7 @@ Progress: [██████████░░░░░░░░░░] 50%
 | Phase 10 P01 | 6min | 2 tasks | 3 files |
 | Phase 11 P01 | 3min | 1 tasks | 2 files |
 | Phase 11 P02 | 1min | 2 tasks | 3 files |
+| Phase 12 P01 | 2min | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -174,6 +175,8 @@ Recent decisions affecting current work:
 - [Phase 11]: Config-save changedPaths propagation for selective SMA/EPEX triggers
 - [Phase 11]: SMA trigger uses startsWith match on schedule.smallMarketAutomation prefix
 - [Phase 11]: EPEX trigger uses exact match on epex.bzn and epex.enabled paths
+- [Phase 12]: Null guard before Number() in fmtCentValue (Number(null)=0 passes isFinite)
+- [Phase 12]: formatTimestamp uses manual string formatting for consistent DD.MM. HH:MM output
 
 ### Pending Todos
 
@@ -188,6 +191,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-15T00:12:00Z
-Stopped at: Completed 11-02-PLAN.md
+Last session: 2026-03-15T00:55:36Z
+Stopped at: Completed 12-01-PLAN.md
 Resume file: None

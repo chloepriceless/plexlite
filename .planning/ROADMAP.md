@@ -234,7 +234,7 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 12-01-PLAN.md -- Data display cards: EPEX prices, costs, system status (Row 2 KPI cards)
+- [x] 12-01-PLAN.md -- Data display cards: EPEX prices, costs, system status (Row 2 KPI cards)
 - [ ] 12-02-PLAN.md -- Control panel: Min SOC slider, charge current input, EPEX refresh
 - [ ] 12-03-PLAN.md -- Schedule panel: inline editing, defaults, active values display
 
