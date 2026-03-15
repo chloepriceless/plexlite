@@ -26,6 +26,10 @@ export function useWebSocket(url) {
           switch (data.type) {
             case 'telemetry':
               telemetry.value = data.data;
+              // Extract EPEX prices array for PriceChart (epex.data has {ts, ct_kwh, ...})
+              if (data.data?.epex?.data) {
+                prices.value = data.data.epex.data.map(s => ({ ts: s.ts, price: s.ct_kwh }));
+              }
               break;
             case 'config':
               config.value = data.data;

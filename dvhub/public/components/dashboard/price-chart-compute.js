@@ -17,6 +17,7 @@ export function computeBarLayout(pricesArray, width, height) {
 
   return pricesArray.map((entry, i) => {
     const price = entry.price || 0;
+    const time = entry.time || entry.ts;
     const barH = (Math.abs(price) / maxAbs) * midY;
     const positive = price >= 0;
     return {
@@ -25,8 +26,8 @@ export function computeBarLayout(pricesArray, width, height) {
       w: Math.max(0, barW),
       h: barH,
       color: positive ? 'var(--chart-positive)' : 'var(--chart-negative)',
-      label: `${formatSlotTime(entry.time)}: ${price.toFixed(2)} ct/kWh`,
-      _ts: new Date(entry.time).getTime(),
+      label: `${formatSlotTime(time)}: ${price.toFixed(2)} ct/kWh`,
+      _ts: typeof time === 'number' ? time : new Date(time).getTime(),
     };
   });
 }
