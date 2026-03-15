@@ -8,6 +8,9 @@ import { EnergyTimeline } from './energy-timeline.js';
 import { ForecastChart } from './forecast-chart.js';
 import { SchedulePanel } from './schedule-panel.js';
 import { ControlPanel } from './control-panel.js';
+import { EpexCard } from './epex-card.js';
+import { CostCard } from './cost-card.js';
+import { StatusCard } from './status-card.js';
 import { LogPanel } from './log-panel.js';
 
 // Energy data signal -- derived from telemetry history (placeholder for now)
@@ -36,17 +39,22 @@ export function DashboardPage() {
       <${KpiCards} />
       <${ControlPanel} />
 
-      <!-- Row 2: Price Chart (span-12) -->
+      <!-- Row 2: EPEX Prices (span-4), Costs (span-4), System Status (span-4) -->
+      <${EpexCard} />
+      <${CostCard} />
+      <${StatusCard} />
+
+      <!-- Row 3: Price Chart (span-12) -->
       <${PriceChart} prices=${prices} />
 
-      <!-- Row 3: Energy Timeline (span-12) -->
+      <!-- Row 4: Energy Timeline (span-12) -->
       <${EnergyTimeline} energyData=${energyData} prices=${prices} />
 
-      <!-- Row 4: Forecast Chart (span-6), Schedule Panel (span-6) -->
+      <!-- Row 5: Forecast Chart (span-6), Schedule Panel (span-6) -->
       <${ForecastChart} forecast=${forecast} />
       <${SchedulePanel} />
 
-      <!-- Row 5: Log Panel (span-12) -->
+      <!-- Row 6: Log Panel (span-12) -->
       <${LogPanel} />
     </main>
   `;
