@@ -2753,12 +2753,26 @@ async function initializeGatewayRuntime(ctx) {
     configPath: CONFIG_PATH,
     logBuffer: state.log,
     appVersion: APP_VERSION,
-    onConfigSaved: () => {
+    onConfigSaved: ({ changedPaths = [] } = {}) => {
       // Sync gateway runtime state with newly saved config
       state.schedule.config.defaultGridSetpointW = cfg.schedule.defaultGridSetpointW;
       state.schedule.config.defaultChargeCurrentA = cfg.schedule.defaultChargeCurrentA;
       state.schedule.rules = Array.isArray(cfg.schedule.rules) ? cfg.schedule.rules : [];
       state.keepalive.appPulse.periodSec = cfg.keepalivePulseSec;
+
+      // INTEG-03: Trigger SMA re-evaluation when automation config changes
+      const smaChanged = changedPaths.some(p => p.startsWith('schedule.smallMarketAutomation'));
+      if (smaChanged) {
+        regenerateSmallMarketAutomationRules();
+        pushLog('sma_config_trigger', { reason: 'config_save', changedPaths: changedPaths.filter(p => p.startsWith('schedule.smallMarketAutomation')) });
+      }
+
+      // INTEG-03: Trigger EPEX refresh when bzn or enabled changes
+      const epexChanged = changedPaths.some(p => p === 'epex.bzn' || p === 'epex.enabled');
+      if (epexChanged) {
+        fetchEpexDay().catch(err => pushLog('epex_config_trigger_err', { error: err.message }));
+        pushLog('epex_config_trigger', { reason: 'config_save', changedPaths: changedPaths.filter(p => p.startsWith('epex.')) });
+      }
     },
     hal,
     eventBus: ctx.eventBus,

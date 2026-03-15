@@ -434,7 +434,7 @@ function saveConfigAndBuildResponse(deps, body, source) {
 
   // Notify gateway to sync runtime state with updated config
   if (typeof deps.onConfigSaved === 'function') {
-    deps.onConfigSaved();
+    deps.onConfigSaved({ changedPaths });
   }
 
   pushLog(deps, 'config_saved', {
