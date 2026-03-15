@@ -198,10 +198,95 @@ Plans:
 Plans:
 - [ ] 10-01-PLAN.md -- Executor null guards and WebSocket field name fix
 
+### v1.1 Phases (Functional Parity)
+
+- [x] **Phase 11: Backend Integration** - API response completeness and WebSocket telemetry field parity with old system (completed 2026-03-15)
+- [ ] **Phase 12: Dashboard Data & Controls** - Dashboard metrics, KPI cards, control panel write functions, and schedule management
+- [ ] **Phase 13: Chart Interactivity** - Price chart slot selection, tooltips, overlays, and margin comparison
+- [ ] **Phase 14: Kleine Boersenautomatik** - Stage-based automation config panel with plan summary and slot visualization
+- [ ] **Phase 15: Settings Parity** - Network discovery, VRM history import, health checks, and service management
+- [ ] **Phase 16: History Parity** - Cost metrics, market premium calculations, backfill modes, and data quality badges
+
+### Phase 11: Backend Integration
+**Goal**: API responses and WebSocket telemetry deliver all fields the old system provided, so frontend components receive complete data without gaps or missing properties
+**Depends on**: Phase 10
+**Requirements**: INTEG-01, INTEG-02, INTEG-03
+**Success Criteria** (what must be TRUE):
+  1. GET /api/status returns all fields present in the old system response including DV state, schedule state, cost totals, and Modbus keepalive timestamps
+  2. WebSocket telemetry messages include 3-phase grid power (L1/L2/L3), DV feedback indicators, active schedule values, and EPEX price data -- all fields the dashboard components expect
+  3. POST /api/config/save persists changes and synchronizes runtime state so that schedule rules, keepalive settings, and control defaults take effect immediately without restart
+**Plans**: 2 plans
+
+Plans:
+- [x] 11-01-PLAN.md -- API status field parity: DV keepalive + schedule state objects
+- [x] 11-02-PLAN.md -- WS telemetry extension + config-save triggers
+
+### Phase 12: Dashboard Data & Controls
+**Goal**: Dashboard displays all operational metrics from the old system and provides interactive control elements for battery management, grid setpoints, and schedule editing
+**Depends on**: Phase 11
+**Requirements**: DATA-01, DATA-02, DATA-03, DATA-04, DATA-05, DATA-06, DATA-07, DATA-08, CTRL-01, CTRL-02, CTRL-03, CTRL-04, CTRL-05
+**Success Criteria** (what must be TRUE):
+  1. User sees 3-phase grid power (L1/L2/L3), DV DC/AC feedback flags, negative-price protection status, and Modbus keepalive timestamp on the dashboard -- matching old system layout
+  2. EPEX price KPI card shows current slot price, next slot price, and today/tomorrow min/max -- cost card shows import costs, export revenue, and net costs with color coding (green=profit, red=cost)
+  3. User can adjust Min SOC via slider with pending-state animation (blinking) that resolves on write confirmation, and can trigger charge current writes and EPEX manual refresh from the control panel
+  4. User can create, edit, and delete schedule rules inline in the schedule panel, including default grid setpoint and default charge current input fields
+  5. Active schedule values (gridSetpoint, chargeCurrent, minSoc) and last control-write timestamp display in the dashboard status area
+**Plans**: 3 plans
+
+Plans:
+- [ ] 12-01-PLAN.md -- Data display cards: EPEX prices, costs, system status (Row 2 KPI cards)
+- [ ] 12-02-PLAN.md -- Control panel: Min SOC slider, charge current input, EPEX refresh
+- [ ] 12-03-PLAN.md -- Schedule panel: inline editing, defaults, active values display
+
+### Phase 13: Chart Interactivity
+**Goal**: Price chart supports interactive slot selection for schedule creation, detailed tooltips, price overlays, and margin comparisons -- matching the old system's chart functionality
+**Depends on**: Phase 12
+**Requirements**: CHART-01, CHART-02, CHART-03, CHART-04, CHART-05
+**Success Criteria** (what must be TRUE):
+  1. User can click or drag-select price chart bars to select time slots, and selected slots can be used to create new schedule rules
+  2. Hovering over a price bar shows a tooltip with slot time range, price in ct/kWh, and import price comparison
+  3. Import price overlay line renders on the price chart so the user can visually compare EPEX prices against their import tariff, with a zero-baseline reference line
+  4. Price comparison summary displays calculated margins for PV export, battery arbitrage, and mixed strategies versus grid import cost
+**Plans**: TBD
+
+### Phase 14: Kleine Boersenautomatik
+**Goal**: The stage-based market automation system is fully configurable from the dashboard, showing plan summaries and visualizing selected slots on the price chart
+**Depends on**: Phase 13
+**Requirements**: SMA-01, SMA-02, SMA-03, SMA-04
+**Success Criteria** (what must be TRUE):
+  1. User can open the automation config panel and see the current stage-based configuration with all parameters (price thresholds, SOC limits, charge/discharge settings per stage)
+  2. User can add, edit, and remove automation stages through the config panel UI
+  3. Automation status panel shows whether automation is active, the current plan summary (total energy, expected revenue), and which stage is currently executing
+  4. Slots selected by the automation algorithm are visually highlighted in the price chart with distinct coloring per stage
+**Plans**: TBD
+
+### Phase 15: Settings Parity
+**Goal**: Settings page provides device discovery, VRM history import, system health monitoring, and service management -- all settings features present in the old system
+**Depends on**: Phase 11
+**Requirements**: SETT-01, SETT-02, SETT-03, SETT-04, SETT-05
+**Success Criteria** (what must be TRUE):
+  1. User can click a discovery button to find Victron systems on the local network via mDNS, select one, and auto-populate connection settings
+  2. User can start VRM history import with date range selection, see progress with a status banner, and choose between gap-fill and full-backfill modes
+  3. Health checks panel shows service status for each module (gateway, DV, optimizer) with uptime and last-error timestamps
+  4. User can restart the DVhub service from the settings page with a confirmation dialog
+**Plans**: TBD
+
+### Phase 16: History Parity
+**Goal**: History page displays comprehensive energy economics including import/export costs, avoided costs, market values, and data quality indicators
+**Depends on**: Phase 11
+**Requirements**: HIST-01, HIST-02, HIST-03, HIST-04, HIST-05, HIST-06
+**Success Criteria** (what must be TRUE):
+  1. History page shows import costs (EUR), export revenue (EUR), and net costs with daily/weekly/monthly aggregation
+  2. Avoided costs section displays what PV and battery saved versus grid import, with total savings calculation
+  3. Market value and market premium metrics show annual/monthly/weekly Marktwert Solar values
+  4. PV full-load hours (Volllaststunden) calculation displays annual VBH metric
+  5. Data quality badges indicate estimated or incomplete data points on chart elements
+**Plans**: TBD
+
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order. Phases 3 and 4 share Phase 2 as dependency and are independent of each other. Phase 6 requires both Phase 3 and Phase 4.
+Phases execute in numeric order. Phases 3 and 4 share Phase 2 as dependency and are independent of each other. Phase 6 requires both Phase 3 and Phase 4. v1.1 phases (11+) execute sequentially starting from Phase 11.
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -215,3 +300,9 @@ Phases execute in numeric order. Phases 3 and 4 share Phase 2 as dependency and 
 | 8. UI Modernization | 3/3 | Complete   | 2026-03-14 |
 | 9. Integration Wiring | 1/1 | Complete   | 2026-03-14 |
 | 10. Null Safety & WS Field Fix | 1/1 | Complete   | 2026-03-14 |
+| 11. Backend Integration | 2/2 | Complete   | 2026-03-15 |
+| 12. Dashboard Data & Controls | 0/3 | Not started | - |
+| 13. Chart Interactivity | 0/0 | Not started | - |
+| 14. Kleine Boersenautomatik | 0/0 | Not started | - |
+| 15. Settings Parity | 0/0 | Not started | - |
+| 16. History Parity | 0/0 | Not started | - |
