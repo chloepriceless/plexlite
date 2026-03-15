@@ -19,15 +19,15 @@ created: 2026-03-15
 |----------|-------|
 | **Framework** | Node.js built-in test runner (node --test) |
 | **Config file** | none — existing pattern from Phase 12 |
-| **Quick run command** | `node --test dvhub/test/price-chart-*.test.js` |
-| **Full suite command** | `node --test dvhub/test/price-chart-*.test.js dvhub/test/chart-selection.test.js` |
+| **Quick run command** | `node --test dvhub/test/price-chart-selection.test.js` |
+| **Full suite command** | `node --test dvhub/test/price-chart-selection.test.js` |
 | **Estimated runtime** | ~3 seconds |
 
 ---
 
 ## Sampling Rate
 
-- **After every task commit:** Run `node --test dvhub/test/price-chart-*.test.js`
+- **After every task commit:** Run `node --test dvhub/test/price-chart-selection.test.js`
 - **After every plan wave:** Run full suite
 - **Before `/gsd:verify-work`:** Full suite must be green
 - **Max feedback latency:** 5 seconds
@@ -38,10 +38,10 @@ created: 2026-03-15
 
 | Task ID | Plan | Wave | Requirement | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|-----------|-------------------|-------------|--------|
-| 13-01-01 | 01 | 1 | CHART-01 | unit | `node --test dvhub/test/chart-selection.test.js` | ❌ W0 | ⬜ pending |
-| 13-01-02 | 01 | 1 | CHART-01 | unit | `node --test dvhub/test/chart-selection.test.js` | ❌ W0 | ⬜ pending |
-| 13-02-01 | 02 | 2 | CHART-02, CHART-03 | unit | `node --test dvhub/test/price-chart-compute.test.js` | ❌ W0 | ⬜ pending |
-| 13-02-02 | 02 | 2 | CHART-04 | unit | `node --test dvhub/test/price-chart-compute.test.js` | ❌ W0 | ⬜ pending |
+| 13-01-01 | 01 | 1 | CHART-01, CHART-03 | unit | `node --test dvhub/test/price-chart-selection.test.js` | ❌ W0 | ⬜ pending |
+| 13-01-02 | 01 | 1 | CHART-05 | unit | `node --test dvhub/test/price-chart-selection.test.js` | ✅ T1 | ⬜ pending |
+| 13-02-01 | 02 | 2 | CHART-01, CHART-02, CHART-03, CHART-04 | unit+grep | `node --test dvhub/test/price-chart-selection.test.js` | ✅ W1 | ⬜ pending |
+| 13-02-02 | 02 | 2 | CHART-05 | grep | grep checks | ✅ | ⬜ pending |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
@@ -49,8 +49,7 @@ created: 2026-03-15
 
 ## Wave 0 Requirements
 
-- [ ] `dvhub/test/chart-selection.test.js` — stubs for CHART-01 (selection logic, window building)
-- [ ] `dvhub/test/price-chart-compute.test.js` — extend existing for CHART-02, CHART-03, CHART-04
+- [ ] `dvhub/test/price-chart-selection.test.js` — tests for selection logic, window building, overlay computation, rule creation
 
 *Existing infrastructure covers test framework — no new installs needed.*
 
