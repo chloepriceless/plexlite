@@ -50,6 +50,10 @@ export function createTelemetryStreams(eventBus) {
       gridSetpointW: snapshot.victron?.gridSetpointW ?? null,
       minSocPct: snapshot.victron?.minSocPct ?? null,
       selfConsumptionW: snapshot.victron?.selfConsumptionW ?? null,
+      // Dashboard live-update fields (INTEG-02)
+      costs: snapshot.costs ?? null,
+      ctrl: snapshot.ctrl ?? null,
+      keepalive: snapshot.keepalive ?? null,
     });
   }
 

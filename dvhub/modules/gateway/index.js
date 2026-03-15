@@ -1251,7 +1251,13 @@ async function pollMeter() {
     meter: state.meter,
     victron: state.victron,
     schedule: state.schedule,
-    epex: state.epex
+    epex: state.epex,
+    costs: costSummary(),
+    ctrl: typeof dvStateProvider === 'function' ? (dvStateProvider()?.ctrl ?? state.ctrl) : state.ctrl,
+    keepalive: {
+      ...state.keepalive,
+      modbusLastQuery: typeof dvStateProvider === 'function' ? (dvStateProvider()?.keepalive?.modbusLastQuery ?? null) : null
+    }
   });
 
   liveTelemetryBuffer?.capture({
@@ -2725,7 +2731,13 @@ async function initializeGatewayRuntime(ctx) {
     meter: state.meter,
     victron: state.victron,
     schedule: state.schedule,
-    epex: state.epex
+    epex: state.epex,
+    costs: costSummary(),
+    ctrl: typeof dvStateProvider === 'function' ? (dvStateProvider()?.ctrl ?? state.ctrl) : state.ctrl,
+    keepalive: {
+      ...state.keepalive,
+      modbusLastQuery: typeof dvStateProvider === 'function' ? (dvStateProvider()?.keepalive?.modbusLastQuery ?? null) : null
+    }
   });
 
   const routeApi = buildGatewayRouteApi();
