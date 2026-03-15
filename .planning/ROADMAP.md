@@ -301,7 +301,7 @@ Phases execute in numeric order. Phases 3 and 4 share Phase 2 as dependency and 
 | 9. Integration Wiring | 1/1 | Complete   | 2026-03-14 |
 | 10. Null Safety & WS Field Fix | 1/1 | Complete   | 2026-03-14 |
 | 11. Backend Integration | 2/2 | Complete   | 2026-03-15 |
-| 12. Dashboard Data & Controls | 3/3 | Complete   | 2026-03-15 |
+| 12. Dashboard Data & Controls | 3/3 | Complete    | 2026-03-15 |
 | 13. Chart Interactivity | 0/0 | Not started | - |
 | 14. Kleine Boersenautomatik | 0/0 | Not started | - |
 | 15. Settings Parity | 0/0 | Not started | - |
